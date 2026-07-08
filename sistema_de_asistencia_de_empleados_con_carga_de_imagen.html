@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AsistencIA - Control con Soporte de Imagen e IA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .expandable-content {
+            transition: all 0.3s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .expanded .expandable-content {
+            max-height: 500px;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- CABECERA DE LA APP -->
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <div>
+                <div class="flex items-center gap-2">
+                    <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-100">
+                        <i data-lucide="calendar-check-2" class="w-6 h-6"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">AsistencIA</h1>
+                </div>
+                <p class="text-sm text-slate-500 mt-1">Gestión de personal y simulación de reconocimiento facial por Webcam</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-2">
+                <!-- Botón simulador de IA -->
+                <button onclick="abrirModalSimuladorIA()" class="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-md shadow-amber-100 hover:shadow-lg focus:outline-none">
+                    <i data-lucide="scan-face" class="w-4 h-4 animate-pulse"></i>
+                    Simular Cámara IA
+                </button>
+                <!-- Botón Registrar Empleado -->
+                <button onclick="abrirModalNuevoEmpleado()" class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-md shadow-indigo-100 hover:shadow-lg focus:outline-none">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    Registrar Empleado
+                </button>
+            </div>
+        </header>
+
+        <!-- TARJETAS DE MÉTRICAS -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Empleados</p>
+                    <h3 id="stat-total" class="text-2xl font-bold text-slate-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <i data-lucide="user-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Presentes</p>
+                    <h3 id="stat-presentes" class="text-2xl font-bold text-slate-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                    <i data-lucide="clock-alert" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Retrasos</p>
+                    <h3 id="stat-retrasos" class="text-2xl font-bold text-slate-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
+                    <i data-lucide="user-x" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ausentes</p>
+                    <h3 id="stat-ausentes" class="text-2xl font-bold text-slate-800">0</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- FILTROS Y BÚSQUEDA -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+            <!-- Buscador general -->
+            <div class="relative w-full md:w-96">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </span>
+                <input type="text" id="busqueda" oninput="filtrarEmpleados()" placeholder="Buscar por nombre, ID o teléfono..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-slate-50 placeholder-slate-400" />
+            </div>
+
+            <!-- Filtros de estado -->
+            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto no-scrollbar">
+                <button onclick="filtrarPorEstado('todos')" id="btn-filtro-todos" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-white text-slate-800 shadow-sm whitespace-nowrap">
+                    Todos
+                </button>
+                <button onclick="filtrarPorEstado('Presente')" id="btn-filtro-presente" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 whitespace-nowrap">
+                    Presentes
+                </button>
+                <button onclick="filtrarPorEstado('Tarde')" id="btn-filtro-tarde" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 whitespace-nowrap">
+                    Retrasos
+                </button>
+                <button onclick="filtrarPorEstado('Ausente')" id="btn-filtro-ausente" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 whitespace-nowrap">
+                    Ausentes
+                </button>
+            </div>
+        </div>
+
+        <!-- TABLA DE EMPLEADOS -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            <th class="py-4 px-6 w-12 text-center"></th>
+                            <th class="py-4 px-4">Empleado</th>
+                            <th class="py-4 px-4 hidden sm:table-cell">ID Empleado</th>
+                            <th class="py-4 px-4">Teléfono</th>
+                            <th class="py-4 px-4">Estado Actual</th>
+                            <th class="py-4 px-6 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-cuerpo" class="divide-y divide-slate-100">
+                        <!-- Renderizado dinámico -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="no-resultados" class="hidden py-16 text-center">
+                <div class="inline-flex p-4 bg-slate-50 text-slate-400 rounded-full mb-3">
+                    <i data-lucide="user-search" class="w-8 h-8"></i>
+                </div>
+                <h4 class="text-base font-semibold text-slate-700">No se encontraron empleados</h4>
+                <p class="text-sm text-slate-400 mt-1">Prueba con términos diferentes o añade un nuevo empleado.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRAR NUEVO EMPLEADO -->
+    <div id="modal-empleado" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-xl border border-slate-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900">Registrar Nuevo Empleado</h3>
+                <button onclick="cerrarModalNuevoEmpleado()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="form-empleado" onsubmit="guardarEmpleado(event)" class="p-6 space-y-4">
+                <!-- Selector de Imagen de Perfil -->
+                <div class="flex flex-col items-center justify-center pb-4 border-b border-slate-50">
+                    <div class="relative group">
+                        <img id="preview-foto" src="https://ui-avatars.com/api/?name=Nuevo+Empleado&background=f1f5f9&color=64748b" class="w-24 h-24 rounded-2xl object-cover ring-4 ring-slate-100 bg-slate-50" alt="Preview">
+                        <label for="form-foto" class="absolute inset-0 bg-slate-950/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
+                            <i data-lucide="camera" class="w-6 h-6"></i>
+                        </label>
+                    </div>
+                    <input type="file" id="form-foto" accept="image/*" onchange="procesarFotoSeleccionada(event)" class="hidden">
+                    <p class="text-xs text-slate-400 mt-2">Haz clic para subir la foto de perfil del empleado</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nombre Completo <span class="text-rose-500">*</span></label>
+                        <input type="text" id="form-nombre" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. Carlos Mendoza">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Teléfono <span class="text-rose-500">*</span></label>
+                        <input type="tel" id="form-telefono" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. +591 71234567">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">ID Único Empleado <span class="text-rose-500">*</span></label>
+                        <input type="text" id="form-id" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. EMP-2026-09">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Puesto / Rol <span class="text-rose-500">*</span></label>
+                        <input type="text" id="form-puesto" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. Diseñador UI/UX">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Departamento</label>
+                        <input type="text" id="form-depto" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. Tecnología">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Fecha de Nacimiento</label>
+                        <input type="date" id="form-nacimiento" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Correo Electrónico</label>
+                    <input type="email" id="form-correo" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="ejemplo@empresa.com">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Dirección Personal</label>
+                    <textarea id="form-direccion" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all resize-none" placeholder="Ej. Calle Principal 456"></textarea>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="cerrarModalNuevoEmpleado()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-all shadow-md">
+                        Guardar Registro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL SIMULADOR CÁMARA IA -->
+    <div id="modal-ia" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-amber-600">
+                    <i data-lucide="scan-face" class="w-5 h-5"></i>
+                    <h3 class="text-lg font-bold text-slate-900">Simulador de Cámara IA</h3>
+                </div>
+                <button onclick="cerrarModalSimuladorIA()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <!-- Recuadro simulador de Webcam -->
+                <div class="relative bg-slate-950 aspect-video rounded-xl overflow-hidden flex flex-col items-center justify-center text-center p-4 border border-slate-800">
+                    <!-- Efecto de escaneo láser -->
+                    <div class="absolute inset-x-0 h-0.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] top-0 animate-[bounce_3s_infinite]"></div>
+                    
+                    <div class="z-10 text-slate-400 space-y-2">
+                        <i data-lucide="video" class="w-8 h-8 mx-auto text-emerald-400 animate-pulse"></i>
+                        <p class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Webcam: Online (Simulada)</p>
+                        <p class="text-[11px] text-slate-500 max-w-xs">La IA procesará el rostro del empleado seleccionado abajo para automatizar la actualización de asistencia.</p>
+                    </div>
+                </div>
+
+                <!-- Selección de empleado a simular -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Selecciona un Empleado para escanear</label>
+                    <select id="simulacion-empleado-id" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all bg-slate-50">
+                        <!-- Llenado dinámicamente -->
+                    </select>
+                </div>
+
+                <!-- Selección de estado a registrar -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Acción de la IA (Estado a marcar)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex flex-col items-center justify-center p-2.5 border border-slate-200 rounded-xl text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all">
+                            <input type="radio" name="sim-estado" value="Presente" checked class="sr-only">
+                            <span class="text-xs font-bold text-emerald-700">Presente</span>
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-2.5 border border-slate-200 rounded-xl text-center cursor-pointer hover:bg-amber-50 hover:border-amber-200 transition-all">
+                            <input type="radio" name="sim-estado" value="Tarde" class="sr-only">
+                            <span class="text-xs font-bold text-amber-700">Tarde</span>
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-2.5 border border-slate-200 rounded-xl text-center cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-all">
+                            <input type="radio" name="sim-estado" value="Ausente" class="sr-only">
+                            <span class="text-xs font-bold text-rose-700">Ausente</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="cerrarModalSimuladorIA()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                        Cerrar
+                    </button>
+                    <button type="button" onclick="ejecutarEscaneoIA()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition-all shadow-md">
+                        Ejecutar Escaneo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR DE NOTIFICACIONES -->
+    <div id="contenedor-notificaciones" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full"></div>
+
+    <script>
+        // Datos Iniciales (Mock Data) con fotos precargadas
+        let empleados = [
+            {
+                id: "EMP-2026-01",
+                nombre: "Sofía Alarcón",
+                telefono: "+591 76543210",
+                puesto: "Líder de Desarrollo Frontend",
+                departamento: "Tecnología",
+                correo: "sofia.alarcon@empresa.com",
+                nacimiento: "1994-05-12",
+                direccion: "Av. San Martín #234, Condominio Los Pinos",
+                estado: "Presente",
+                foto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
+            },
+            {
+                id: "EMP-2026-02",
+                nombre: "Alejandro Vargas",
+                telefono: "+591 71239845",
+                puesto: "Especialista de Reclutamiento",
+                departamento: "Recursos Humanos",
+                correo: "alejandro.v@empresa.com",
+                nacimiento: "1991-11-23",
+                direccion: "Calle Ballivián #89, Barrio Las Palmas",
+                estado: "Ausente",
+                foto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120"
+            },
+            {
+                id: "EMP-2026-03",
+                nombre: "Camila Ortiz",
+                telefono: "+591 60897744",
+                puesto: "Diseñadora de Producto Principal",
+                departamento: "Diseño & UX",
+                correo: "camila.ortiz@empresa.com",
+                nacimiento: "1996-08-04",
+                direccion: "Equipetrol, Calle 9 Oeste #45",
+                estado: "Tarde",
+                foto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"
+            }
+        ];
+
+        let filtroEstadoActual = 'todos';
+        let filaExpandidaId = null;
+        let imagenBase64Cargada = null; // Guardará la imagen temporalmente
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderizarTabla();
+            lucide.createIcons();
+            sincronizarRadioInputsEstilo();
+        });
+
+        function formatearFecha(fechaStr) {
+            if (!fechaStr) return "No registrada";
+            const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+            const fecha = new Date(fechaStr);
+            return fecha.toLocaleDateString('es-ES', opciones);
+        }
+
+        // Renderizar Tabla
+        function renderizarTabla() {
+            const cuerpo = document.getElementById('tabla-cuerpo');
+            cuerpo.innerHTML = '';
+
+            const busquedaQuery = document.getElementById('busqueda').value.toLowerCase().trim();
+            
+            const empleadosFiltrados = empleados.filter(emp => {
+                const coincideEstado = filtroEstadoActual === 'todos' || emp.estado === filtroEstadoActual;
+                const coincideBusqueda = emp.nombre.toLowerCase().includes(busquedaQuery) || 
+                                        emp.id.toLowerCase().includes(busquedaQuery) || 
+                                        emp.telefono.includes(busquedaQuery);
+                return coincideEstado && coincideBusqueda;
+            });
+
+            actualizarMetricas();
+
+            if (empleadosFiltrados.length === 0) {
+                document.getElementById('no-resultados').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('no-resultados').classList.add('hidden');
+            }
+
+            empleadosFiltrados.forEach(emp => {
+                const esExpandida = filaExpandidaId === emp.id;
+                
+                let badgeClass = "";
+                if (emp.estado === "Presente") badgeClass = "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10";
+                else if (emp.estado === "Tarde") badgeClass = "bg-amber-50 text-amber-700 ring-1 ring-amber-600/10";
+                else badgeClass = "bg-rose-50 text-rose-700 ring-1 ring-rose-600/10";
+
+                const trPrincipal = document.createElement('tr');
+                trPrincipal.className = `hover:bg-slate-50/80 cursor-pointer transition-colors ${esExpandida ? 'bg-slate-50/50' : ''}`;
+                trPrincipal.onclick = () => alternarFila(emp.id);
+
+                trPrincipal.innerHTML = `
+                    <td class="py-4 px-6 text-center">
+                        <button class="text-slate-400 hover:text-slate-600 focus:outline-none transition-transform duration-200 ${esExpandida ? 'rotate-180' : ''}">
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                    <td class="py-4 px-4">
+                        <div class="flex items-center gap-3">
+                            <img class="h-10 w-10 rounded-xl object-cover ring-2 ring-slate-100 bg-slate-200" src="${emp.foto}" alt="Foto de ${emp.nombre}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(emp.nombre)}&background=6366f1&color=fff'">
+                            <div>
+                                <span class="font-semibold text-slate-900 block text-sm sm:text-base">${emp.nombre}</span>
+                                <span class="text-xs text-slate-400 block md:hidden">${emp.id}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4 hidden sm:table-cell">
+                        <span class="text-sm font-medium text-slate-600">${emp.id}</span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="text-sm text-slate-500 font-medium">${emp.telefono}</span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${badgeClass}">
+                            ${emp.estado}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-right" onclick="event.stopPropagation()">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="cambiarEstadoAsistencia('${emp.id}')" title="Cambiar Estado" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="eliminarEmpleado('${emp.id}')" title="Eliminar Empleado" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                cuerpo.appendChild(trPrincipal);
+
+                // Fila Expandida
+                if (esExpandida) {
+                    const trDetalle = document.createElement('tr');
+                    trDetalle.className = "bg-slate-50/30";
+                    trDetalle.innerHTML = `
+                        <td colspan="6" class="p-0">
+                            <div class="px-6 py-6 border-t border-b border-slate-100 bg-indigo-50/10">
+                                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                    <div class="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col items-center sm:items-start lg:items-center text-center sm:text-left lg:text-center gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                                        <img class="w-24 h-24 rounded-2xl object-cover ring-4 ring-indigo-50 bg-slate-200" src="${emp.foto}" alt="Foto" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(emp.nombre)}&background=6366f1&color=fff'">
+                                        <div class="space-y-1">
+                                            <h4 class="font-bold text-slate-950 text-lg">${emp.nombre}</h4>
+                                            <span class="inline-flex px-2.5 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-semibold">${emp.puesto}</span>
+                                            <p class="text-xs text-slate-400 mt-1">${emp.id} &bull; ${emp.departamento || 'Sin Depto.'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                                        <div class="space-y-1">
+                                            <span class="text-xs text-slate-400 font-semibold block uppercase">Correo Corporativo</span>
+                                            <span class="text-sm font-medium text-slate-700 block truncate">${emp.correo || 'No asignado'}</span>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <span class="text-xs text-slate-400 font-semibold block uppercase">Número Telefónico</span>
+                                            <span class="text-sm font-medium text-slate-700 block">${emp.telefono}</span>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <span class="text-xs text-slate-400 font-semibold block uppercase">Fecha de Nacimiento</span>
+                                            <span class="text-sm font-medium text-slate-700 block">${formatearFecha(emp.nacimiento)}</span>
+                                        </div>
+                                        <div class="space-y-1 sm:col-span-2">
+                                            <span class="text-xs text-slate-400 font-semibold block uppercase">Dirección Registrada</span>
+                                            <span class="text-sm font-medium text-slate-700 block leading-relaxed">${emp.direccion || 'No especificada'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="lg:col-span-3 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                                        <div>
+                                            <h5 class="text-xs font-bold text-slate-400 uppercase mb-3">Historial del Día</h5>
+                                            <div class="space-y-3">
+                                                <div class="flex items-center gap-3 text-xs">
+                                                    <span class="w-2.5 h-2.5 rounded-full ${emp.estado === 'Presente' ? 'bg-emerald-500' : emp.estado === 'Tarde' ? 'bg-amber-500' : 'bg-slate-300'}"></span>
+                                                    <span class="text-slate-500">Entrada:</span>
+                                                    <span class="font-semibold text-slate-800">${emp.estado !== 'Ausente' ? '08:15 AM' : '--:--'}</span>
+                                                </div>
+                                                <div class="flex items-center gap-3 text-xs">
+                                                    <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                                                    <span class="text-slate-500">Salida:</span>
+                                                    <span class="font-semibold text-slate-800">--:--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
+                                            <button onclick="cambiarEstadoAsistencia('${emp.id}')" class="w-full inline-flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 px-3 rounded-xl text-xs font-bold transition-colors">
+                                                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                                                Alternar Registro
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    cuerpo.appendChild(trDetalle);
+                }
+            });
+
+            lucide.createIcons();
+        }
+
+        function alternarFila(id) {
+            filaExpandidaId = (filaExpandidaId === id) ? null : id;
+            renderizarTabla();
+        }
+
+        // Cambiar el estado de asistencia rotativamente
+        function cambiarEstadoAsistencia(id) {
+            const index = empleados.findIndex(emp => emp.id === id);
+            if (index !== -1) {
+                const estados = ["Presente", "Tarde", "Ausente"];
+                let actualIdx = estados.indexOf(empleados[index].estado);
+                let siguienteIdx = (actualIdx + 1) % estados.length;
+                empleados[index].estado = estados[siguienteIdx];
+                
+                crearToast(`Estado de ${empleados[index].nombre} cambiado a: ${estados[siguienteIdx]}`, "success");
+                renderizarTabla();
+            }
+        }
+
+        function eliminarEmpleado(id) {
+            const index = empleados.findIndex(emp => emp.id === id);
+            if (index !== -1) {
+                const nombre = empleados[index].nombre;
+                if (filaExpandidaId === id) filaExpandidaId = null;
+                
+                empleados.splice(index, 1);
+                crearToast(`Empleado ${nombre} eliminado del sistema`, "info");
+                renderizarTabla();
+            }
+        }
+
+        function actualizarMetricas() {
+            const total = empleados.length;
+            const presentes = empleados.filter(e => e.estado === 'Presente').length;
+            const retrasos = empleados.filter(e => e.estado === 'Tarde').length;
+            const ausentes = empleados.filter(e => e.estado === 'Ausente').length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-presentes').innerText = presentes;
+            document.getElementById('stat-retrasos').innerText = retrasos;
+            document.getElementById('stat-ausentes').innerText = ausentes;
+        }
+
+        function filtrarPorEstado(estado) {
+            filtroEstadoActual = estado;
+            const filtros = ['todos', 'presente', 'tarde', 'ausente'];
+            filtros.forEach(f => {
+                const btn = document.getElementById(`btn-filtro-${f}`);
+                if (f === estado.toLowerCase()) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-white text-slate-800 shadow-sm whitespace-nowrap";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 whitespace-nowrap";
+                }
+            });
+            renderizarTabla();
+        }
+
+        function filtrarEmpleados() {
+            renderizarTabla();
+        }
+
+        // Control de Carga de Imagen
+        function procesarFotoSeleccionada(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagenBase64Cargada = e.target.result;
+                    document.getElementById('preview-foto').src = imagenBase64Cargada;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Controladores del Modal de Registro
+        function abrirModalNuevoEmpleado() {
+            document.getElementById('modal-empleado').classList.remove('hidden');
+        }
+
+        function cerrarModalNuevoEmpleado() {
+            document.getElementById('modal-empleado').classList.add('hidden');
+            document.getElementById('form-empleado').reset();
+            // Reset de imagen preview
+            imagenBase64Cargada = null;
+            document.getElementById('preview-foto').src = "https://ui-avatars.com/api/?name=Nuevo+Empleado&background=f1f5f9&color=64748b";
+        }
+
+        // Guardar nuevo empleado
+        function guardarEmpleado(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('form-id').value.trim();
+            const nombre = document.getElementById('form-nombre').value.trim();
+            const telefono = document.getElementById('form-telefono').value.trim();
+            const puesto = document.getElementById('form-puesto').value.trim();
+            const depto = document.getElementById('form-depto').value.trim() || 'Sin asignar';
+            const nacimiento = document.getElementById('form-nacimiento').value;
+            const correo = document.getElementById('form-correo').value.trim();
+            const direccion = document.getElementById('form-direccion').value.trim();
+
+            if (empleados.some(emp => emp.id === id)) {
+                crearToast("Error: Ya existe un empleado con ese ID.", "error");
+                return;
+            }
+
+            // Si no subieron imagen, generar un avatar por defecto usando su nombre
+            const fotoEstablecida = imagenBase64Cargada || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}&background=6366f1&color=fff`;
+
+            const nuevoEmpleado = {
+                id,
+                nombre,
+                telefono,
+                puesto,
+                departamento: depto,
+                correo,
+                nacimiento,
+                direccion,
+                estado: "Presente",
+                foto: fotoEstablecida
+            };
+
+            empleados.push(nuevoEmpleado);
+            cerrarModalNuevoEmpleado();
+            crearToast(`¡${nombre} registrado exitosamente!`, "success");
+            renderizarTabla();
+        }
+
+        // Lógica del simulador IA (Webcam)
+        function abrirModalSimuladorIA() {
+            const select = document.getElementById('simulacion-empleado-id');
+            select.innerHTML = '';
+            
+            if (empleados.length === 0) {
+                select.innerHTML = '<option value="">No hay empleados registrados</option>';
+            } else {
+                empleados.forEach(emp => {
+                    select.innerHTML += `<option value="${emp.id}">${emp.nombre} (${emp.id})</option>`;
+                });
+            }
+            
+            document.getElementById('modal-ia').classList.remove('hidden');
+        }
+
+        function cerrarModalSimuladorIA() {
+            document.getElementById('modal-ia').classList.add('hidden');
+        }
+
+        function ejecutarEscaneoIA() {
+            const empId = document.getElementById('simulacion-empleado-id').value;
+            if (!empId) {
+                crearToast("Debe registrar al menos un empleado para simular", "error");
+                return;
+            }
+
+            const radios = document.getElementsByName('sim-estado');
+            let estadoSeleccionado = "Presente";
+            for (let r of radios) {
+                if (r.checked) {
+                    estadoSeleccionado = r.value;
+                    break;
+                }
+            }
+
+            // Simulando la llamada de la IA que edita el estado de asistencia en el array de memoria
+            const index = empleados.findIndex(emp => emp.id === empId);
+            if (index !== -1) {
+                empleados[index].estado = estadoSeleccionado;
+                crearToast(`[IA Webcam] Rostro reconocido: ${empleados[index].nombre} marcado como ${estadoSeleccionado}`, "success");
+                cerrarModalSimuladorIA();
+                renderizarTabla();
+            }
+        }
+
+        // Sincronizar estilo visual de los botones de radio personalizados en el simulador
+        function sincronizarRadioInputsEstilo() {
+            const labels = document.querySelectorAll('input[name="sim-estado"]');
+            labels.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    // Limpiar clases activas en los hermanos
+                    labels.forEach(r => {
+                        r.parentElement.classList.remove('ring-2', 'ring-indigo-500', 'bg-slate-50');
+                    });
+                    if (e.target.checked) {
+                        e.target.parentElement.classList.add('ring-2', 'ring-indigo-500', 'bg-slate-50');
+                    }
+                });
+            });
+        }
+
+        // Sistema de Notificaciones
+        function crearToast(mensaje, tipo = "info") {
+            const contenedor = document.getElementById('contenedor-notificaciones');
+            const toast = document.createElement('div');
+            
+            let colorBg = "bg-white";
+            let colorIcon = "text-indigo-500";
+            let icono = "info";
+
+            if (tipo === "success") {
+                colorIcon = "text-emerald-500";
+                icono = "check-circle-2";
+            } else if (tipo === "error") {
+                colorIcon = "text-rose-500";
+                icono = "alert-triangle";
+            }
+
+            toast.className = `flex items-center gap-3 p-4 rounded-xl shadow-lg border border-slate-100 ${colorBg} animate-in slide-in-from-bottom-5 duration-300`;
+            toast.innerHTML = `
+                <div class="${colorIcon}">
+                    <i data-lucide="${icono}" class="w-5 h-5"></i>
+                </div>
+                <div class="text-sm font-semibold text-slate-800">${mensaje}</div>
+            `;
+
+            contenedor.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.add('animate-out', 'fade-out-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
