@@ -3,733 +3,1341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AsistencIA - Control con Soporte de Imagen e IA</title>
+    <title>Linux Hub - La Guía Definitiva y Directorio de Distros</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            900: '#14532d',
+                        },
+                        terminal: {
+                            bg: '#0a0f0d',
+                            panel: '#111815',
+                            border: '#1f2e26'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .expandable-content {
-            transition: all 0.3s ease-in-out;
-            max-height: 0;
-            overflow: hidden;
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
         }
-        .expanded .expandable-content {
-            max-height: 500px;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a;
         }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #22c55e;
+        }
+        /* Glow animations */
+        .terminal-glow {
+            box-shadow: 0 0 25px -5px rgba(34, 197, 94, 0.15);
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+<body class="bg-terminal-bg text-gray-200 min-h-screen selection:bg-brand-500 selection:text-black">
 
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <!-- CABECERA DE LA APP -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+<!-- NAV BAR -->
+<nav class="sticky top-0 z-50 bg-terminal-panel/80 backdrop-blur-md border-b border-terminal-border px-4 sm:px-6 py-4">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center border border-brand-500/30 text-brand-500 text-xl font-bold">
+                <i class="fab fa-linux"></i>
+            </div>
             <div>
-                <div class="flex items-center gap-2">
-                    <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-100">
-                        <i data-lucide="calendar-check-2" class="w-6 h-6"></i>
-                    </div>
-                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">AsistencIA</h1>
-                </div>
-                <p class="text-sm text-slate-500 mt-1">Gestión de personal y simulación de reconocimiento facial por Webcam</p>
-            </div>
-            
-            <div class="flex flex-wrap gap-2">
-                <!-- Botón simulador de IA -->
-                <button onclick="abrirModalSimuladorIA()" class="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-md shadow-amber-100 hover:shadow-lg focus:outline-none">
-                    <i data-lucide="scan-face" class="w-4 h-4 animate-pulse"></i>
-                    Simular Cámara IA
-                </button>
-                <!-- Botón Registrar Empleado -->
-                <button onclick="abrirModalNuevoEmpleado()" class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-md shadow-indigo-100 hover:shadow-lg focus:outline-none">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i>
-                    Registrar Empleado
-                </button>
-            </div>
-        </header>
-
-        <!-- TARJETAS DE MÉTRICAS -->
-        <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <i data-lucide="users" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Empleados</p>
-                    <h3 id="stat-total" class="text-2xl font-bold text-slate-800">0</h3>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                    <i data-lucide="user-check" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Presentes</p>
-                    <h3 id="stat-presentes" class="text-2xl font-bold text-slate-800">0</h3>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
-                    <i data-lucide="clock-alert" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Retrasos</p>
-                    <h3 id="stat-retrasos" class="text-2xl font-bold text-slate-800">0</h3>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
-                    <i data-lucide="user-x" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ausentes</p>
-                    <h3 id="stat-ausentes" class="text-2xl font-bold text-slate-800">0</h3>
-                </div>
-            </div>
-        </section>
-
-        <!-- FILTROS Y BÚSQUEDA -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-            <!-- Buscador general -->
-            <div class="relative w-full md:w-96">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                    <i data-lucide="search" class="w-5 h-5"></i>
-                </span>
-                <input type="text" id="busqueda" oninput="filtrarEmpleados()" placeholder="Buscar por nombre, ID o teléfono..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-slate-50 placeholder-slate-400" />
-            </div>
-
-            <!-- Filtros de estado -->
-            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto no-scrollbar">
-                <button onclick="filtrarPorEstado('todos')" id="btn-filtro-todos" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-white text-slate-800 shadow-sm whitespace-nowrap">
-                    Todos
-                </button>
-                <button onclick="filtrarPorEstado('Presente')" id="btn-filtro-presente" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 whitespace-nowrap">
-                    Presentes
-                </button>
-                <button onclick="filtrarPorEstado('Tarde')" id="btn-filtro-tarde" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 whitespace-nowrap">
-                    Retrasos
-                </button>
-                <button onclick="filtrarPorEstado('Ausente')" id="btn-filtro-ausente" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 whitespace-nowrap">
-                    Ausentes
-                </button>
+                <span class="text-xl font-extrabold tracking-tight text-white block">LINUX<span class="text-brand-500">HUB</span></span>
+                <span class="text-xs text-gray-400 block -mt-1">Guía Completa & Distros de la A a la Z</span>
             </div>
         </div>
+        <div class="flex flex-wrap gap-2 text-sm">
+            <a href="#introduccion" class="px-3 py-1.5 rounded-lg hover:bg-brand-500/10 hover:text-brand-500 transition-colors">¿Qué es Linux?</a>
+            <a href="#quiz" class="px-3 py-1.5 rounded-lg hover:bg-brand-500/10 hover:text-brand-500 transition-colors">Test de Distro</a>
+            <a href="#distros" class="px-3 py-1.5 rounded-lg hover:bg-brand-500/10 hover:text-brand-500 transition-colors">Directorio de Distros</a>
+            <a href="#terminal" class="px-3 py-1.5 rounded-lg hover:bg-brand-500/10 hover:text-brand-500 transition-colors">Simulador</a>
+            <a href="#comandos" class="px-3 py-1.5 rounded-lg hover:bg-brand-500/10 hover:text-brand-500 transition-colors">Comandos</a>
+            <a href="#estructura" class="px-3 py-1.5 rounded-lg hover:bg-brand-500/10 hover:text-brand-500 transition-colors">Directorios</a>
+        </div>
+    </div>
+</nav>
 
-        <!-- TABLA DE EMPLEADOS -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            <th class="py-4 px-6 w-12 text-center"></th>
-                            <th class="py-4 px-4">Empleado</th>
-                            <th class="py-4 px-4 hidden sm:table-cell">ID Empleado</th>
-                            <th class="py-4 px-4">Teléfono</th>
-                            <th class="py-4 px-4">Estado Actual</th>
-                            <th class="py-4 px-6 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-cuerpo" class="divide-y divide-slate-100">
-                        <!-- Renderizado dinámico -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <div id="no-resultados" class="hidden py-16 text-center">
-                <div class="inline-flex p-4 bg-slate-50 text-slate-400 rounded-full mb-3">
-                    <i data-lucide="user-search" class="w-8 h-8"></i>
+<!-- HERO SECTION -->
+<header class="relative overflow-hidden py-16 sm:py-24 border-b border-terminal-border bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-900/10 via-terminal-bg to-terminal-bg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 text-xs font-semibold">
+                    <span class="flex h-2 w-2 rounded-full bg-brand-500 animate-pulse"></span>
+                    La enciclopedia definitiva del pingüino
                 </div>
-                <h4 class="text-base font-semibold text-slate-700">No se encontraron empleados</h4>
-                <p class="text-sm text-slate-400 mt-1">Prueba con términos diferentes o añade un nuevo empleado.</p>
+                <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                    Domina el Sistema de Código Abierto más potente del planeta.
+                </h1>
+                <p class="text-lg text-gray-400 max-w-2xl mx-auto lg:mx-0">
+                    Desde los fundamentos del Kernel, pasando por un directorio interactivo con los requisitos mínimos de las mejores distribuciones, hasta un simulador de consola en tiempo real.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="#distros" class="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-neutral-950 font-bold rounded-xl transition-all shadow-lg hover:shadow-brand-500/20 flex items-center justify-center gap-2">
+                        <i class="fas fa-list"></i> Ver Directorio de Distros
+                    </a>
+                    <a href="#terminal" class="px-6 py-3 bg-neutral-900 hover:bg-neutral-800 border border-terminal-border hover:border-brand-500/40 text-gray-300 rounded-xl transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-terminal"></i> Probar Simulador de Bash
+                    </a>
+                </div>
+            </div>
+            <div class="lg:col-span-5 relative">
+                <!-- Decorative Mock Terminal in Hero -->
+                <div class="w-full bg-black/50 border border-terminal-border rounded-xl p-4 font-mono text-xs text-brand-500 shadow-2xl terminal-glow">
+                    <div class="flex items-center justify-between pb-3 border-b border-terminal-border/40 mb-3 text-gray-500">
+                        <div class="flex gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-red-500/70"></span>
+                            <span class="w-3 h-3 rounded-full bg-yellow-500/70"></span>
+                            <span class="w-3 h-3 rounded-full bg-green-500/70"></span>
+                        </div>
+                        <span>guest@linuxhub:~</span>
+                    </div>
+                    <p class="text-gray-400"># Ejecutando análisis del ecosistema Linux...</p>
+                    <p class="text-white mt-1">$ neofetch</p>
+                    <div class="flex gap-4 mt-2">
+                        <pre class="text-brand-500 select-none hidden sm:block text-[10px] leading-tight">
+    .--.
+   |o_o |
+   |:_/ |
+  //   \ \
+ (|     | )
+/'\_   _/`\
+\___)=(___/
+                        </pre>
+                        <div class="space-y-1 text-[11px]">
+                            <p><strong class="text-white">OS:</strong> Linux Hub Knowledge base v1.0.0</p>
+                            <p><strong class="text-white">Kernel:</strong> 6.10-lts-stable</p>
+                            <p><strong class="text-white">Uptime:</strong> 100% libre</p>
+                            <p><strong class="text-white">Shell:</strong> bash 5.2-interactive</p>
+                            <p><strong class="text-white">Distros Catalogadas:</strong> 11 y sumando</p>
+                            <p><strong class="text-white">Terminal simulator:</strong> Listo</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+</header>
 
-    <!-- MODAL REGISTRAR NUEVO EMPLEADO -->
-    <div id="modal-empleado" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full shadow-xl border border-slate-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h3 class="text-lg font-bold text-slate-900">Registrar Nuevo Empleado</h3>
-                <button onclick="cerrarModalNuevoEmpleado()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+<!-- INTERACTIVE SELECTOR QUIZ -->
+<section id="quiz" class="py-16 bg-terminal-panel/40 border-b border-terminal-border">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="text-center mb-8">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white">¿Qué distribución de Linux es perfecta para ti?</h2>
+            <p class="text-gray-400 mt-2">Responde estas sencillas preguntas y nuestro algoritmo te dará la recomendación ideal.</p>
+        </div>
+
+        <div class="bg-terminal-panel border border-terminal-border rounded-2xl p-6 sm:p-8 relative">
+            <div id="quiz-question-container">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="quiz-step" class="text-brand-500 font-bold text-sm tracking-widest uppercase">Pregunta 1 de 4</span>
+                    <div class="h-2 w-32 bg-neutral-800 rounded-full overflow-hidden">
+                        <div id="quiz-progress-bar" class="h-full bg-brand-500 transition-all duration-300" style="width: 25%"></div>
+                    </div>
+                </div>
+                
+                <h3 id="quiz-question-text" class="text-xl font-bold text-white mb-6">¿Cuál es tu nivel de experiencia en informática y sistemas operativos?</h3>
+
+                <div id="quiz-options" class="grid grid-cols-1 gap-4">
+                    <!-- Options injected by JS -->
+                </div>
             </div>
-            
-            <form id="form-empleado" onsubmit="guardarEmpleado(event)" class="p-6 space-y-4">
-                <!-- Selector de Imagen de Perfil -->
-                <div class="flex flex-col items-center justify-center pb-4 border-b border-slate-50">
-                    <div class="relative group">
-                        <img id="preview-foto" src="https://ui-avatars.com/api/?name=Nuevo+Empleado&background=f1f5f9&color=64748b" class="w-24 h-24 rounded-2xl object-cover ring-4 ring-slate-100 bg-slate-50" alt="Preview">
-                        <label for="form-foto" class="absolute inset-0 bg-slate-950/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
-                            <i data-lucide="camera" class="w-6 h-6"></i>
-                        </label>
-                    </div>
-                    <input type="file" id="form-foto" accept="image/*" onchange="procesarFotoSeleccionada(event)" class="hidden">
-                    <p class="text-xs text-slate-400 mt-2">Haz clic para subir la foto de perfil del empleado</p>
-                </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nombre Completo <span class="text-rose-500">*</span></label>
-                        <input type="text" id="form-nombre" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. Carlos Mendoza">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Teléfono <span class="text-rose-500">*</span></label>
-                        <input type="tel" id="form-telefono" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. +591 71234567">
-                    </div>
+            <!-- Quiz Result UI (Initially Hidden) -->
+            <div id="quiz-result-container" class="hidden text-center py-6 space-y-6">
+                <div class="w-16 h-16 rounded-full bg-brand-500/10 flex items-center justify-center border border-brand-500 text-brand-500 text-3xl mx-auto">
+                    <i class="fas fa-magic"></i>
                 </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">ID Único Empleado <span class="text-rose-500">*</span></label>
-                        <input type="text" id="form-id" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. EMP-2026-09">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Puesto / Rol <span class="text-rose-500">*</span></label>
-                        <input type="text" id="form-puesto" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. Diseñador UI/UX">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Departamento</label>
-                        <input type="text" id="form-depto" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Ej. Tecnología">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Fecha de Nacimiento</label>
-                        <input type="date" id="form-nacimiento" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all">
-                    </div>
-                </div>
-
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Correo Electrónico</label>
-                    <input type="email" id="form-correo" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="ejemplo@empresa.com">
+                    <h3 class="text-sm text-brand-500 uppercase font-bold tracking-widest">Resultado de tu test</h3>
+                    <h4 id="quiz-result-title" class="text-3xl font-extrabold text-white mt-1">Ubuntu Linux</h4>
+                    <p id="quiz-result-desc" class="text-gray-400 mt-2 max-w-md mx-auto">Es la distro más popular, perfecta para principiantes gracias a su gran estabilidad, facilidad de uso y gigantesca comunidad de soporte.</p>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Dirección Personal</label>
-                    <textarea id="form-direccion" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all resize-none" placeholder="Ej. Calle Principal 456"></textarea>
+                <div id="quiz-result-specs" class="bg-terminal-bg/50 border border-terminal-border rounded-xl p-4 max-w-md mx-auto text-left text-sm space-y-2">
+                    <p class="text-xs text-gray-500 uppercase font-bold">Requisitos mínimos recomendados:</p>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400"><i class="fas fa-microchip mr-2 text-brand-500"></i> Procesador:</span>
+                        <span id="quiz-result-cpu" class="text-white font-medium">Dual Core 2.0 GHz</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400"><i class="fas fa-memory mr-2 text-brand-500"></i> Memoria RAM:</span>
+                        <span id="quiz-result-ram" class="text-white font-medium">4 GB</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400"><i class="fas fa-hdd mr-2 text-brand-500"></i> Disco Duro:</span>
+                        <span id="quiz-result-disk" class="text-white font-medium">25 GB libres</span>
+                    </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <button type="button" onclick="cerrarModalNuevoEmpleado()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                        Cancelar
+                <div class="flex gap-4 justify-center">
+                    <button onclick="resetQuiz()" class="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-gray-300 font-bold rounded-xl transition-all text-sm">
+                        <i class="fas fa-undo mr-1"></i> Repetir Test
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-all shadow-md">
-                        Guardar Registro
-                    </button>
+                    <a id="quiz-result-link" href="#" target="_blank" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-neutral-950 font-bold rounded-xl transition-all text-sm inline-flex items-center gap-1">
+                        Ir al sitio oficial <i class="fas fa-external-link-alt ml-1"></i>
+                    </a>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
+</section>
 
-    <!-- MODAL SIMULADOR CÁMARA IA -->
-    <div id="modal-ia" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-2 text-amber-600">
-                    <i data-lucide="scan-face" class="w-5 h-5"></i>
-                    <h3 class="text-lg font-bold text-slate-900">Simulador de Cámara IA</h3>
+<!-- INTRODUCTION SECTION -->
+<section id="introduccion" class="py-20 max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div class="lg:col-span-6 space-y-6">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
+                ¿Qué es exactamente <span class="text-brand-500">Linux</span>?
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+                Linux no es simplemente un sistema operativo tradicional como Windows o macOS. Es una familia de sistemas de código abierto basados en el <strong class="text-white">Kernel Linux</strong>, creado originalmente por Linus Torvalds en 1991.
+            </p>
+            <p class="text-gray-400 leading-relaxed">
+                El núcleo (kernel) administra el hardware de tu máquina, mientras que las utilidades del proyecto GNU y entornos de escritorio componen el entorno visual. La combinación de esto da origen a lo que correctamente llamamos <strong class="text-white">GNU/Linux</strong>.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                <div class="p-4 rounded-xl bg-terminal-panel border border-terminal-border">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-2">
+                        <i class="fas fa-code-branch"></i>
+                    </div>
+                    <h4 class="text-white font-bold mb-1">Código Abierto</h4>
+                    <p class="text-xs text-gray-500">Cualquiera puede inspeccionar, modificar, mejorar y distribuir su código de forma totalmente transparente.</p>
                 </div>
-                <button onclick="cerrarModalSimuladorIA()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+                <div class="p-4 rounded-xl bg-terminal-panel border border-terminal-border">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-2">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4 class="text-white font-bold mb-1">Seguridad Robustecida</h4>
+                    <p class="text-xs text-gray-500">Arquitectura basada en privilegios rigurosos que lo hace sumamente seguro ante amenazas de virus y malware.</p>
+                </div>
+                <div class="p-4 rounded-xl bg-terminal-panel border border-terminal-border">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-2">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h4 class="text-white font-bold mb-1">Rendimiento Inigualable</h4>
+                    <p class="text-xs text-gray-500">Ideal para resucitar hardware viejo y alimentar el 96% de los servidores del planeta e infraestructura cloud.</p>
+                </div>
+                <div class="p-4 rounded-xl bg-terminal-panel border border-terminal-border">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-2">
+                        <i class="fas fa-puzzle-piece"></i>
+                    </div>
+                    <h4 class="text-white font-bold mb-1">Modularidad Infinita</h4>
+                    <p class="text-xs text-gray-500">Cambia lo que quieras, desde el gestor de ventanas, hasta las aplicaciones base e incluso el propio kernel.</p>
+                </div>
             </div>
+        </div>
+        
+        <div class="lg:col-span-6 bg-terminal-panel border border-terminal-border rounded-2xl p-6 space-y-6">
+            <h3 class="text-xl font-bold text-white border-b border-terminal-border pb-3">Anatomía Básica del Ecosistema</h3>
             
-            <div class="p-6 space-y-4">
-                <!-- Recuadro simulador de Webcam -->
-                <div class="relative bg-slate-950 aspect-video rounded-xl overflow-hidden flex flex-col items-center justify-center text-center p-4 border border-slate-800">
-                    <!-- Efecto de escaneo láser -->
-                    <div class="absolute inset-x-0 h-0.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] top-0 animate-[bounce_3s_infinite]"></div>
+            <div class="space-y-4">
+                <div class="flex gap-4">
+                    <div class="flex-none w-10 h-10 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold">1</div>
+                    <div>
+                        <h4 class="text-white font-semibold">El Kernel (Núcleo)</h4>
+                        <p class="text-sm text-gray-400">La capa más profunda. Se encarga de comunicar el software con el procesador, memoria RAM, almacenamiento y periféricos.</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-4">
+                    <div class="flex-none w-10 h-10 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold">2</div>
+                    <div>
+                        <h4 class="text-white font-semibold">El Entorno del Sistema (Gnu / Base)</h4>
+                        <p class="text-sm text-gray-400">Aporta las herramientas para manipular archivos, procesar comandos de consola y controlar los procesos más básicos.</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-4">
+                    <div class="flex-none w-10 h-10 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold">3</div>
+                    <div>
+                        <h4 class="text-white font-semibold">Servidor Gráfico & Entorno de Escritorio</h4>
+                        <p class="text-sm text-gray-400">Administra la interfaz visual. Incluye gestores gráficos de pantallas como Wayland o X11, junto a entornos visuales de renombre como GNOME, KDE Plasma o XFCE.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="flex-none w-10 h-10 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold">4</div>
+                    <div>
+                        <h4 class="text-white font-semibold">Distribuciones (Distros)</h4>
+                        <p class="text-sm text-gray-400">Paquetes listos para instalar ensamblados por comunidades u organizaciones empresariales, agregando un instalador y repositorios de software.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- DISTROS CATALOGUE -->
+<section id="distros" class="py-20 bg-terminal-panel/30 border-t border-b border-terminal-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <div class="text-center max-w-3xl mx-auto mb-12">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Directorio Completo de Distribuciones</h2>
+            <p class="text-gray-400 mt-2">Explora las distros más influyentes, sus perfiles de usuario ideales, enlaces de descarga directa y especificaciones de hardware recomendadas.</p>
+            
+            <!-- Filter Bar -->
+            <div class="flex flex-wrap justify-center gap-2 mt-6">
+                <button onclick="filterDistros('all')" class="distro-tab px-4 py-1.5 rounded-full bg-brand-500 text-neutral-950 text-xs font-bold transition-all border border-transparent" id="tab-all">Todas</button>
+                <button onclick="filterDistros('principiante')" class="distro-tab px-4 py-1.5 rounded-full bg-neutral-900 border border-terminal-border text-gray-400 text-xs font-bold transition-all hover:text-white" id="tab-principiante">Para Principiantes</button>
+                <button onclick="filterDistros('intermedio')" class="distro-tab px-4 py-1.5 rounded-full bg-neutral-900 border border-terminal-border text-gray-400 text-xs font-bold transition-all hover:text-white" id="tab-intermedio">Intermedio / General</button>
+                <button onclick="filterDistros('avanzado')" class="distro-tab px-4 py-1.5 rounded-full bg-neutral-900 border border-terminal-border text-gray-400 text-xs font-bold transition-all hover:text-white" id="tab-avanzado">Avanzado / DIY</button>
+                <button onclick="filterDistros('especializado')" class="distro-tab px-4 py-1.5 rounded-full bg-neutral-900 border border-terminal-border text-gray-400 text-xs font-bold transition-all hover:text-white" id="tab-especializado">Especializado</button>
+            </div>
+        </div>
+
+        <div id="distros-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Distro cards will be injected here dynamically by script to ensure flawless maintainability and interactive filtering -->
+        </div>
+    </div>
+</section>
+
+<!-- TERMINAL SIMULATOR SECTION -->
+<section id="terminal" class="py-20 max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch">
+        <div class="lg:col-span-5 space-y-6 flex flex-col justify-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 text-xs font-semibold w-max">
+                <i class="fas fa-terminal"></i> Terminal Interactiva 100% cliente
+            </div>
+            <h2 class="text-3xl font-extrabold text-white">Practica tus primeros comandos de Bash</h2>
+            <p class="text-gray-400">
+                ¿No tienes Linux instalado? No hay problema. Hemos desarrollado un micro-emulador de Linux en Javascript para que comiences a familiarizarte hoy mismo con la sintaxis de la consola.
+            </p>
+            <div class="p-4 bg-terminal-panel border border-terminal-border rounded-xl space-y-2">
+                <p class="text-xs text-brand-500 font-bold uppercase tracking-wider">Comandos de ejemplo soportados:</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs">
+                    <span class="text-white hover:text-brand-500 cursor-pointer" onclick="runExampleCmd('help')">help <span class="text-gray-500">- listado</span></span>
+                    <span class="text-white hover:text-brand-500 cursor-pointer" onclick="runExampleCmd('ls')">ls <span class="text-gray-500">- ver archivos</span></span>
+                    <span class="text-white hover:text-brand-500 cursor-pointer" onclick="runExampleCmd('pwd')">pwd <span class="text-gray-500">- directorio</span></span>
+                    <span class="text-white hover:text-brand-500 cursor-pointer" onclick="runExampleCmd('neofetch')">neofetch <span class="text-gray-500">- info</span></span>
+                    <span class="text-white hover:text-brand-500 cursor-pointer" onclick="runExampleCmd('cat info.txt')">cat <span class="text-gray-500">- abrir arch.</span></span>
+                    <span class="text-white hover:text-brand-500 cursor-pointer" onclick="runExampleCmd('whoami')">whoami <span class="text-gray-500">- usuario</span></span>
+                    <span class="text-white hover:text-brand-500 cursor-pointer" onclick="runExampleCmd('clear')">clear <span class="text-gray-500">- limpiar</span></span>
+                    <span class="text-white hover:text-brand-500 cursor-pointer" onclick="runExampleCmd('sudo rm -rf /')">sudo rm -rf /</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7 flex flex-col">
+            <div class="flex-grow bg-terminal-bg border-2 border-terminal-border rounded-2xl flex flex-col overflow-hidden min-h-[400px] shadow-2xl terminal-glow">
+                <!-- Terminal Header -->
+                <div class="bg-terminal-panel px-4 py-3 flex items-center justify-between border-b border-terminal-border">
+                    <div class="flex gap-2">
+                        <span class="w-3.5 h-3.5 rounded-full bg-red-500"></span>
+                        <span class="w-3.5 h-3.5 rounded-full bg-yellow-500"></span>
+                        <span class="w-3.5 h-3.5 rounded-full bg-green-500"></span>
+                    </div>
+                    <span class="font-mono text-sm text-gray-400 flex items-center gap-1.5"><i class="fas fa-terminal text-brand-500"></i> terminal@linuxhub.sh</span>
+                    <span class="w-6"></span>
+                </div>
+                
+                <!-- Terminal Body -->
+                <div id="terminal-screen" class="flex-grow p-4 font-mono text-sm text-gray-300 overflow-y-auto max-h-[350px] space-y-2 custom-scrollbar">
+                    <p class="text-brand-500">¡Bienvenido a la consola interactiva de Linux Hub!</p>
+                    <p class="text-gray-400">Escribe <span class="text-white font-bold">"help"</span> y presiona ENTER para desplegar la lista de comandos integrados.</p>
+                </div>
+                
+                <!-- Terminal Input Area -->
+                <div class="bg-black/80 px-4 py-3 border-t border-terminal-border flex items-center gap-2">
+                    <span class="font-mono text-brand-500 font-bold select-none" id="terminal-prompt">user@linuxhub:~$</span>
+                    <input type="text" id="terminal-input" class="flex-grow bg-transparent border-none outline-none text-white font-mono placeholder-gray-600" placeholder="Escribe un comando aquí..." autocomplete="off" autofocus>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- COMMANDS CHEATSHEET SECTION -->
+<section id="comandos" class="py-20 bg-terminal-panel/40 border-t border-b border-terminal-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div>
+                <h2 class="text-3xl font-extrabold text-white">Chuleta / Cheat Sheet de Comandos Esenciales</h2>
+                <p class="text-gray-400 mt-2">La navaja suiza de la terminal Linux. Consúltala en cualquier momento y copia con un solo click.</p>
+            </div>
+            <!-- Search bar commands -->
+            <div class="relative w-full md:w-80">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input type="text" id="command-search" oninput="searchCommands()" class="w-full pl-10 pr-4 py-2 bg-terminal-bg border border-terminal-border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 text-sm" placeholder="Buscar comando...">
+            </div>
+        </div>
+
+        <!-- Notification Bar (Copy Feedback) -->
+        <div id="copy-notif" class="hidden fixed bottom-6 right-6 z-50 bg-brand-500 text-neutral-950 font-bold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">
+            <i class="fas fa-check-circle"></i> <span id="copy-notif-text">¡Copiado al portapapeles!</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Columna 1: Archivos y Directorios -->
+            <div class="bg-terminal-panel border border-terminal-border rounded-xl p-6 space-y-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 border-b border-terminal-border pb-3">
+                    <i class="fas fa-folder text-brand-500"></i> Archivos y Navegación
+                </h3>
+                <div class="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar" id="col-files">
+                    <!-- Cards will be populated by script -->
+                </div>
+            </div>
+
+            <!-- Columna 2: Procesos y Sistema -->
+            <div class="bg-terminal-panel border border-terminal-border rounded-xl p-6 space-y-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 border-b border-terminal-border pb-3">
+                    <i class="fas fa-microchip text-brand-500"></i> Monitoreo & Sistema
+                </h3>
+                <div class="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar" id="col-system">
+                    <!-- Cards will be populated by script -->
+                </div>
+            </div>
+
+            <!-- Columna 3: Permisos y Redes -->
+            <div class="bg-terminal-panel border border-terminal-border rounded-xl p-6 space-y-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 border-b border-terminal-border pb-3">
+                    <i class="fas fa-network-wired text-brand-500"></i> Redes y Permisos
+                </h3>
+                <div class="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar" id="col-network">
+                    <!-- Cards will be populated by script -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- DIRECTORY STRUCTURE SECTION -->
+<section id="estructura" class="py-20 max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="text-center max-w-3xl mx-auto mb-12">
+        <h2 class="text-3xl font-extrabold text-white">La Estructura de Directorios Estándar (FHS)</h2>
+        <p class="text-gray-400 mt-2">A diferencia de Windows con su disco `C:\`, Linux unifica todo bajo un único árbol raíz denominado `/`. Explora cada carpeta con el interactivo a continuación.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        <!-- Arbol visual interactivo -->
+        <div class="lg:col-span-5 bg-terminal-panel border border-terminal-border rounded-2xl p-6">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-sitemap text-brand-500"></i> Árbol de Raíz (click en carpetas)
+            </h3>
+            
+            <div class="font-mono text-sm space-y-2 select-none">
+                <div class="text-brand-500 font-bold flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/')">
+                    <i class="fas fa-folder-open"></i> / (Raíz de todo)
+                </div>
+                <div class="pl-6 border-l border-brand-500/20 space-y-2">
+                    <div class="text-blue-400 flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/bin')">
+                        <i class="fas fa-folder"></i> /bin <span class="text-xs text-gray-500 font-normal">-- binarios esenciales</span>
+                    </div>
+                    <div class="text-blue-400 flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/boot')">
+                        <i class="fas fa-folder"></i> /boot <span class="text-xs text-gray-500 font-normal">-- archivos de arranque</span>
+                    </div>
+                    <div class="text-blue-400 flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/dev')">
+                        <i class="fas fa-folder"></i> /dev <span class="text-xs text-gray-500 font-normal">-- dispositivos físicos</span>
+                    </div>
+                    <div class="text-blue-400 flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/etc')">
+                        <i class="fas fa-folder"></i> /etc <span class="text-xs text-gray-500 font-normal">-- archivos de configuración</span>
+                    </div>
+                    <div class="text-blue-400 flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/home')">
+                        <i class="fas fa-folder"></i> /home <span class="text-xs text-gray-500 font-normal">-- carpetas de usuarios</span>
+                    </div>
+                    <div class="text-blue-400 flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/root')">
+                        <i class="fas fa-folder"></i> /root <span class="text-xs text-gray-500 font-normal">-- casa del superusuario</span>
+                    </div>
+                    <div class="text-blue-400 flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/usr')">
+                        <i class="fas fa-folder"></i> /usr <span class="text-xs text-gray-500 font-normal">-- binarios del usuario</span>
+                    </div>
+                    <div class="text-blue-400 flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-500/10 cursor-pointer transition-colors" onclick="showFolderInfo('/var')">
+                        <i class="fas fa-folder"></i> /var <span class="text-xs text-gray-500 font-normal">-- datos variables (logs)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel descriptivo interactivo -->
+        <div class="lg:col-span-7 bg-terminal-panel border border-terminal-border rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+                <span class="text-xs font-bold text-brand-500 uppercase tracking-widest block mb-2">Explicación del Directorio</span>
+                <h3 id="directory-title" class="text-2xl font-extrabold text-white">/ (Raíz)</h3>
+                
+                <p id="directory-desc" class="text-gray-300 mt-4 leading-relaxed text-base">
+                    Es el nodo fundamental del sistema de archivos en GNU/Linux. Todos los directorios, archivos, discos montados y servicios lógicos de hardware descienden jerárquicamente de este punto. No hay nada "por encima" de la raíz.
+                </p>
+                
+                <div class="mt-6 border-t border-terminal-border pt-6 space-y-4">
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase font-bold">Datos curiosos:</span>
+                        <p id="directory-fun-fact" class="text-sm text-gray-400 mt-1">
+                            En Windows tendrías unidades independientes (C:, D:), en Linux los discos se montan dentro de la estructura de la raíz en carpetas como `/media` o `/mnt`.
+                        </p>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase font-bold">Nivel de peligro de borrado:</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="h-2 w-full bg-neutral-800 rounded-full overflow-hidden">
+                                <div id="directory-danger" class="h-full bg-red-500 transition-all duration-300" style="width: 100%"></div>
+                            </div>
+                            <span id="directory-danger-txt" class="text-xs text-red-500 font-bold">Crítico</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-brand-500/5 p-4 rounded-xl border border-brand-500/10 text-xs text-gray-400 flex items-center gap-3">
+                <i class="fas fa-info-circle text-brand-500 text-lg flex-none"></i>
+                <span>Haz click en cualquiera de las carpetas de la izquierda para desplegar la información interactiva de ese directorio.</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-terminal-panel border-t border-terminal-border py-12 text-gray-500 text-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="flex items-center gap-3">
+            <span class="text-lg font-bold text-white tracking-wider">LINUX<span class="text-brand-500">HUB</span></span>
+            <span class="text-xs border-l border-terminal-border pl-3 text-gray-500">Copyright © 2026. Licencia MIT (Open Source).</span>
+        </div>
+        <div class="flex gap-4 text-xs">
+            <a href="https://www.kernel.org" target="_blank" class="hover:text-brand-500 transition-colors">Sitio del Kernel</a>
+            <a href="https://www.gnu.org" target="_blank" class="hover:text-brand-500 transition-colors">GNU Project</a>
+            <a href="https://opensource.org" target="_blank" class="hover:text-brand-500 transition-colors">Open Source Initiative</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+    /* ========================================================
+       DATABASE DE LAS DISTRIBUCIONES (Requisitos y Enlaces)
+       ======================================================== */
+    const DISTROS = [
+        {
+            id: 'ubuntu',
+            name: 'Ubuntu',
+            logo: 'fab fa-ubuntu',
+            difficulty: 'principiante',
+            tagline: 'La puerta de entrada más popular a Linux',
+            desc: 'Respaldada por Canonical. Ubuntu ofrece una experiencia estable, un entorno visual GNOME pulido y un ecosistema de soporte masivo que la convierte en la reina de los escritorios.',
+            min_specs: {
+                cpu: 'Dual Core de 2.0 GHz',
+                ram: '4 GB',
+                disk: '25 GB libres'
+            },
+            official_url: 'https://ubuntu.com',
+            tags: ['Estable', 'GNOME', 'Canonical', 'Popular']
+        },
+        {
+            id: 'mint',
+            name: 'Linux Mint',
+            logo: 'fas fa-leaf',
+            difficulty: 'principiante',
+            tagline: 'Ideal para quienes migran de Windows',
+            desc: 'Basado en Ubuntu, Linux Mint destaca por su entorno Cinnamon, el cual replica de forma moderna y amigable la disposición clásica de Windows, optimizando el consumo de hardware.',
+            min_specs: {
+                cpu: 'Dual Core x86-64',
+                ram: '2 GB (4 GB recomendados)',
+                disk: '20 GB libres'
+            },
+            official_url: 'https://linuxmint.com',
+            tags: ['Cinnamon', 'Familiar', 'Ligero', 'Estable']
+        },
+        {
+            id: 'debian',
+            name: 'Debian',
+            logo: 'fas fa-yin-yang',
+            difficulty: 'intermedio',
+            tagline: 'La roca y madre de distribuciones',
+            desc: 'Una de las distribuciones más antiguas e importantes de la historia. Debian destaca por su inquebrantable estabilidad, su devoción por el software libre y por ser la base de Ubuntu y Mint.',
+            min_specs: {
+                cpu: 'Procesador de 1.0 GHz',
+                ram: '512 MB (2 GB para escritorio)',
+                disk: '10 GB libres'
+            },
+            official_url: 'https://www.debian.org',
+            tags: ['Ultraestable', 'Servidores', 'Sólido', 'Comunitario']
+        },
+        {
+            id: 'fedora',
+            name: 'Fedora Workstation',
+            logo: 'fab fa-fedora',
+            difficulty: 'intermedio',
+            tagline: 'Vanguardia técnica y software de punta',
+            desc: 'Respaldada por Red Hat/IBM. Es la favorita de creadores y desarrolladores que buscan lo último en tecnologías Linux (como Wayland, Pipewire) sin comprometer la elegancia y estabilidad.',
+            min_specs: {
+                cpu: 'Intel o AMD Dual Core de 2.0 GHz',
+                ram: '2 GB (4 GB recomendados)',
+                disk: '15 GB libres'
+            },
+            official_url: 'https://fedoraproject.org',
+            tags: ['Vanguardia', 'Seguro', 'GNOME', 'RedHat']
+        },
+        {
+            id: 'arch',
+            name: 'Arch Linux',
+            logo: 'fas fa-mountain',
+            difficulty: 'avanzado',
+            tagline: 'Hazlo tú mismo (Do It Yourself - DIY)',
+            desc: 'Una distro de actualización continua (Rolling Release) sin instalador gráfico de manera predeterminada. El usuario construye su sistema desde cero, descargando solo lo que realmente necesita.',
+            min_specs: {
+                cpu: 'Cualquier CPU x86-64',
+                ram: '512 MB (2 GB recomendados)',
+                disk: '2 GB libres (base)'
+            },
+            official_url: 'https://archlinux.org',
+            tags: ['Rolling Release', 'DIY', 'Minimalista', 'AUR']
+        },
+        {
+            id: 'cachyos',
+            name: 'CachyOS',
+            logo: 'fas fa-bolt',
+            difficulty: 'intermedio',
+            tagline: 'Rendimiento gaming y kernel optimizado',
+            desc: 'Basada en Arch Linux pero con instalador gráfico amigable. Está hiper-optimizada con compilaciones que aprovechan las extensiones x86-64-v3/v4 de las CPUs modernas para un rendimiento un 10% superior.',
+            min_specs: {
+                cpu: 'CPU compatible con x86-64-v3',
+                ram: '2 GB (4 GB para escritorio)',
+                disk: '10 GB libres'
+            },
+            official_url: 'https://cachyos.org',
+            tags: ['Gaming', 'Ultra-rápido', 'Arch-based', 'Optimizado']
+        },
+        {
+            id: 'kali',
+            name: 'Kali Linux',
+            logo: 'fas fa-dragon',
+            difficulty: 'especializado',
+            tagline: 'Estándar en Ciberseguridad y Pentesting',
+            desc: 'Desarrollada por Offensive Security. Esta distro basada en Debian viene precargada con cientos de herramientas profesionales para pruebas de penetración, análisis de redes e ingeniería forense.',
+            min_specs: {
+                cpu: 'Procesador de 1.0 GHz x86/x64',
+                ram: '2 GB',
+                disk: '20 GB libres'
+            },
+            official_url: 'https://www.kali.org',
+            tags: ['Hacking', 'Seguridad', 'Forense', 'Debian-based']
+        },
+        {
+            id: 'bedrock',
+            name: 'Bedrock Linux',
+            logo: 'fas fa-cubes',
+            difficulty: 'avanzado',
+            tagline: 'La meta-distribución definitiva',
+            desc: 'Bedrock rompe las barreras de compatibilidad permitiéndote "fusionar" distros. Puedes ejecutar paquetes y drivers de Debian, Arch, Ubuntu, Alpine y Fedora simultáneamente bajo la misma sesión operativa.',
+            min_specs: {
+                cpu: 'Cualquier CPU compatible con Linux',
+                ram: '128 MB (mínimo absoluto)',
+                disk: 'Depende de distros anidadas'
+            },
+            official_url: 'https://bedrocklinux.org',
+            tags: ['Meta-distro', 'Experimental', 'Multiverso', 'Híbrido']
+        },
+        {
+            id: 'gentoo',
+            name: 'Gentoo Linux',
+            logo: 'fas fa-gem',
+            difficulty: 'avanzado',
+            tagline: 'Compila cada paquete para tu máquina',
+            desc: 'Distribución basada en código fuente usando el gestor "Portage". El usuario compila cada programa optimizado con flags específicos para el silicio exacto de su propio ordenador.',
+            min_specs: {
+                cpu: 'Cualquier procesador x86/x64/ARM',
+                ram: '512 MB (Se requieren 8GB+ para compilar software grande)',
+                disk: '10 GB libres'
+            },
+            official_url: 'https://www.gentoo.org',
+            tags: ['Compilación', 'Portage', 'Máxima Optimización', 'DIY']
+        },
+        {
+            id: 'alpine',
+            name: 'Alpine Linux',
+            logo: 'fas fa-snowflake',
+            difficulty: 'especializado',
+            tagline: 'Segura, ultraligera y orientada a contenedores',
+            desc: 'Basada en musl libc y busybox. Su instalación base pesa apenas 5MB, lo que la convierte en el estándar industrial incuestionable para la creación de imágenes seguras de Docker en la nube.',
+            min_specs: {
+                cpu: 'Cualquier CPU moderna x86/ARM',
+                ram: '128 MB',
+                disk: '100 MB de disco'
+            },
+            official_url: 'https://alpinelinux.org',
+            tags: ['Docker', 'Nube', 'Hiperligero', 'Seguridad']
+        },
+        {
+            id: 'opensuse',
+            name: 'openSUSE Tumbleweed',
+            logo: 'fas fa-spider',
+            difficulty: 'intermedio',
+            tagline: 'Elegancia alemana con YaST de control total',
+            desc: 'Una distro de renombre que ofrece "YaST", un panel de administración visual que centraliza toda la configuración del equipo. Destaca por sus snapshots automatizados que recuperan el sistema si algo falla.',
+            min_specs: {
+                cpu: 'Pentium 4 o superior (Dual Core aconsejado)',
+                ram: '2 GB',
+                disk: '40 GB de disco'
+            },
+            official_url: 'https://www.opensuse.org',
+            tags: ['YaST', 'Snapshots', 'Rolling Release', 'Estable']
+        }
+    ];
+
+    /* ========================================================
+       RENDERIZAR DISTROS
+       ======================================================== */
+    function renderDistros(list = DISTROS) {
+        const grid = document.getElementById('distros-grid');
+        grid.innerHTML = '';
+        
+        list.forEach(distro => {
+            const card = document.createElement('div');
+            card.className = "bg-terminal-panel border border-terminal-border rounded-2xl p-6 hover:border-brand-500/50 transition-all hover:translate-y-[-4px] flex flex-col justify-between";
+            
+            // Generate Tags UI
+            let tagsHtml = '';
+            distro.tags.forEach(tag => {
+                tagsHtml += `<span class="bg-neutral-900 border border-terminal-border px-2 py-0.5 rounded text-[10px] text-gray-400 font-mono">${tag}</span>`;
+            });
+
+            // Difficulty Color Badge
+            let diffClass = '';
+            if (distro.difficulty === 'principiante') diffClass = 'bg-green-500/15 text-green-400 border-green-500/20';
+            else if (distro.difficulty === 'intermedio') diffClass = 'bg-blue-500/15 text-blue-400 border-blue-500/20';
+            else if (distro.difficulty === 'avanzado') diffClass = 'bg-red-500/15 text-red-400 border-red-500/20';
+            else diffClass = 'bg-purple-500/15 text-purple-400 border-purple-500/20';
+
+            card.innerHTML = `
+                <div>
+                    <div class="flex justify-between items-start gap-2 mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-xl bg-brand-500/5 flex items-center justify-center border border-brand-500/20 text-brand-500 text-2xl">
+                                <i class="${distro.logo}"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">${distro.name}</h3>
+                                <span class="text-xs text-gray-500 font-mono block">${distro.tagline}</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded-full border uppercase ${diffClass}">${distro.difficulty}</span>
+                    </div>
+
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">${distro.desc}</p>
                     
-                    <div class="z-10 text-slate-400 space-y-2">
-                        <i data-lucide="video" class="w-8 h-8 mx-auto text-emerald-400 animate-pulse"></i>
-                        <p class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Webcam: Online (Simulada)</p>
-                        <p class="text-[11px] text-slate-500 max-w-xs">La IA procesará el rostro del empleado seleccionado abajo para automatizar la actualización de asistencia.</p>
+                    <!-- Specifications Tab -->
+                    <div class="bg-terminal-bg/50 border border-terminal-border/60 rounded-xl p-4 text-xs space-y-2 mb-6">
+                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Requisitos Mínimos:</span>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500"><i class="fas fa-microchip text-brand-500 w-4"></i> Procesador:</span>
+                            <span class="text-gray-300 font-medium">${distro.min_specs.cpu}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500"><i class="fas fa-memory text-brand-500 w-4"></i> Memoria RAM:</span>
+                            <span class="text-gray-300 font-medium">${distro.min_specs.ram}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500"><i class="fas fa-hdd text-brand-500 w-4"></i> Almacenamiento:</span>
+                            <span class="text-gray-300 font-medium">${distro.min_specs.disk}</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Selección de empleado a simular -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Selecciona un Empleado para escanear</label>
-                    <select id="simulacion-empleado-id" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all bg-slate-50">
-                        <!-- Llenado dinámicamente -->
-                    </select>
+                <div class="space-y-4">
+                    <div class="flex flex-wrap gap-1.5">${tagsHtml}</div>
+                    <a href="${distro.official_url}" target="_blank" class="w-full py-2.5 bg-neutral-900 border border-terminal-border text-gray-300 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-500 hover:text-neutral-950 hover:border-transparent font-bold transition-all text-xs">
+                        Visitar Sitio Oficial <i class="fas fa-external-link-alt text-[10px]"></i>
+                    </a>
                 </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
 
-                <!-- Selección de estado a registrar -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Acción de la IA (Estado a marcar)</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <label class="flex flex-col items-center justify-center p-2.5 border border-slate-200 rounded-xl text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all">
-                            <input type="radio" name="sim-estado" value="Presente" checked class="sr-only">
-                            <span class="text-xs font-bold text-emerald-700">Presente</span>
-                        </label>
-                        <label class="flex flex-col items-center justify-center p-2.5 border border-slate-200 rounded-xl text-center cursor-pointer hover:bg-amber-50 hover:border-amber-200 transition-all">
-                            <input type="radio" name="sim-estado" value="Tarde" class="sr-only">
-                            <span class="text-xs font-bold text-amber-700">Tarde</span>
-                        </label>
-                        <label class="flex flex-col items-center justify-center p-2.5 border border-slate-200 rounded-xl text-center cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-all">
-                            <input type="radio" name="sim-estado" value="Ausente" class="sr-only">
-                            <span class="text-xs font-bold text-rose-700">Ausente</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <button type="button" onclick="cerrarModalSimuladorIA()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                        Cerrar
-                    </button>
-                    <button type="button" onclick="ejecutarEscaneoIA()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition-all shadow-md">
-                        Ejecutar Escaneo
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CONTENEDOR DE NOTIFICACIONES -->
-    <div id="contenedor-notificaciones" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full"></div>
-
-    <script>
-        // Datos Iniciales (Mock Data) con fotos precargadas
-        let empleados = [
-            {
-                id: "EMP-2026-01",
-                nombre: "Sofía Alarcón",
-                telefono: "+591 76543210",
-                puesto: "Líder de Desarrollo Frontend",
-                departamento: "Tecnología",
-                correo: "sofia.alarcon@empresa.com",
-                nacimiento: "1994-05-12",
-                direccion: "Av. San Martín #234, Condominio Los Pinos",
-                estado: "Presente",
-                foto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
-            },
-            {
-                id: "EMP-2026-02",
-                nombre: "Alejandro Vargas",
-                telefono: "+591 71239845",
-                puesto: "Especialista de Reclutamiento",
-                departamento: "Recursos Humanos",
-                correo: "alejandro.v@empresa.com",
-                nacimiento: "1991-11-23",
-                direccion: "Calle Ballivián #89, Barrio Las Palmas",
-                estado: "Ausente",
-                foto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120"
-            },
-            {
-                id: "EMP-2026-03",
-                nombre: "Camila Ortiz",
-                telefono: "+591 60897744",
-                puesto: "Diseñadora de Producto Principal",
-                departamento: "Diseño & UX",
-                correo: "camila.ortiz@empresa.com",
-                nacimiento: "1996-08-04",
-                direccion: "Equipetrol, Calle 9 Oeste #45",
-                estado: "Tarde",
-                foto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"
-            }
-        ];
-
-        let filtroEstadoActual = 'todos';
-        let filaExpandidaId = null;
-        let imagenBase64Cargada = null; // Guardará la imagen temporalmente
-
-        window.addEventListener('DOMContentLoaded', () => {
-            renderizarTabla();
-            lucide.createIcons();
-            sincronizarRadioInputsEstilo();
+    function filterDistros(difficulty) {
+        // Reset tabs style
+        document.querySelectorAll('.distro-tab').forEach(tab => {
+            tab.className = "distro-tab px-4 py-1.5 rounded-full bg-neutral-900 border border-terminal-border text-gray-400 text-xs font-bold transition-all hover:text-white";
         });
 
-        function formatearFecha(fechaStr) {
-            if (!fechaStr) return "No registrada";
-            const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
-            const fecha = new Date(fechaStr);
-            return fecha.toLocaleDateString('es-ES', opciones);
+        // Set active style to selected tab
+        const activeTab = document.getElementById(`tab-${difficulty}`);
+        if(activeTab) {
+            activeTab.className = "distro-tab px-4 py-1.5 rounded-full bg-brand-500 text-neutral-950 text-xs font-bold transition-all border border-transparent";
         }
 
-        // Renderizar Tabla
-        function renderizarTabla() {
-            const cuerpo = document.getElementById('tabla-cuerpo');
-            cuerpo.innerHTML = '';
+        if (difficulty === 'all') {
+            renderDistros(DISTROS);
+        } else {
+            const filtered = DISTROS.filter(d => d.difficulty === difficulty);
+            renderDistros(filtered);
+        }
+    }
 
-            const busquedaQuery = document.getElementById('busqueda').value.toLowerCase().trim();
-            
-            const empleadosFiltrados = empleados.filter(emp => {
-                const coincideEstado = filtroEstadoActual === 'todos' || emp.estado === filtroEstadoActual;
-                const coincideBusqueda = emp.nombre.toLowerCase().includes(busquedaQuery) || 
-                                        emp.id.toLowerCase().includes(busquedaQuery) || 
-                                        emp.telefono.includes(busquedaQuery);
-                return coincideEstado && coincideBusqueda;
-            });
+    /* ========================================================
+       RECOMENDADOR DE DISTROS (QUIZ INTERACTIVO)
+       ======================================================== */
+    let currentQuizStep = 0;
+    let quizAnswers = [];
 
-            actualizarMetricas();
+    const QUIZ_QUESTIONS = [
+        {
+            question: "¿Cuál es tu nivel de experiencia en computación / sistemas operativos?",
+            options: [
+                { text: "Básico (solo he usado Windows/macOS para navegar, ver videos u oficina)", score: "beginner" },
+                { text: "Intermedio (conozco qué es la terminal, he instalado drivers o reinstalado sistemas operativos)", score: "intermediate" },
+                { text: "Avanzado (soy desarrollador, administrador de servidores o me gusta compilar mis programas)", score: "advanced" }
+            ]
+        },
+        {
+            question: "¿Qué tipo de interfaz o diseño visual prefieres por defecto?",
+            options: [
+                { text: "Algo clásico como Windows 10/11 con botón de inicio abajo a la izquierda", score: "classic" },
+                { text: "Moderno, minimalista y con gestos táctiles integrados (similar a macOS/Gnome)", score: "modern" },
+                { text: "No quiero interfaz gráfica por defecto, prefiero configurarla yo desde terminal", score: "terminal" }
+            ]
+        },
+        {
+            question: "¿Cuál va a ser el objetivo principal de este sistema Linux?",
+            options: [
+                { text: "Uso general cotidiano, estudio, ofimática y multimedia", score: "general" },
+                { text: "Programar, Docker, desarrollo web y despliegues", score: "dev" },
+                { text: "Videojuegos (Gaming) y máximo rendimiento gráfico", score: "gaming" },
+                { text: "Auditoría de ciberseguridad, hacking ético y análisis de red", score: "hacking" }
+            ]
+        },
+        {
+            question: "¿Qué tipo de hardware posee tu computadora?",
+            options: [
+                { text: "Muy potente o moderno de última generación", score: "high" },
+                { text: "Gama media estándar", score: "med" },
+                { text: "Hardware muy antiguo o con recursos de memoria extremadamente limitados", score: "low" }
+            ]
+        }
+    ];
 
-            if (empleadosFiltrados.length === 0) {
-                document.getElementById('no-resultados').classList.remove('hidden');
-                return;
+    function loadQuizQuestion() {
+        const stepText = document.getElementById('quiz-step');
+        const progressBar = document.getElementById('quiz-progress-bar');
+        const questionText = document.getElementById('quiz-question-text');
+        const optionsContainer = document.getElementById('quiz-options');
+
+        stepText.innerText = `Pregunta ${currentQuizStep + 1} de ${QUIZ_QUESTIONS.length}`;
+        progressBar.style.width = `${((currentQuizStep + 1) / QUIZ_QUESTIONS.length) * 100}%`;
+        
+        const q = QUIZ_QUESTIONS[currentQuizStep];
+        questionText.innerText = q.question;
+        optionsContainer.innerHTML = '';
+
+        q.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 rounded-xl bg-neutral-900 border border-terminal-border text-gray-300 hover:border-brand-500 hover:text-white transition-all text-sm flex justify-between items-center group";
+            btn.innerHTML = `
+                <span>${opt.text}</span>
+                <i class="fas fa-chevron-right text-gray-600 group-hover:text-brand-500 transition-colors"></i>
+            `;
+            btn.onclick = () => selectQuizAnswer(opt.score);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectQuizAnswer(score) {
+        quizAnswers.push(score);
+        if (currentQuizStep < QUIZ_QUESTIONS.length - 1) {
+            currentQuizStep++;
+            loadQuizQuestion();
+        } else {
+            showQuizResult();
+        }
+    }
+
+    function showQuizResult() {
+        document.getElementById('quiz-question-container').classList.add('hidden');
+        document.getElementById('quiz-result-container').classList.remove('hidden');
+
+        // Logic for recommendations based on questions
+        const exp = quizAnswers[0];
+        const ui = quizAnswers[1];
+        const goal = quizAnswers[2];
+        const hw = quizAnswers[3];
+
+        let resultDistro = DISTROS[0]; // Default: Ubuntu
+
+        if (goal === 'hacking') {
+            resultDistro = DISTROS.find(d => d.id === 'kali') || DISTROS[6];
+        } else if (goal === 'gaming' && (exp === 'intermediate' || exp === 'advanced')) {
+            resultDistro = DISTROS.find(d => d.id === 'cachyos') || DISTROS[5];
+        } else if (hw === 'low') {
+            resultDistro = DISTROS.find(d => d.id === 'mint') || DISTROS[1];
+        } else if (exp === 'advanced') {
+            if (ui === 'terminal') {
+                resultDistro = DISTROS.find(d => d.id === 'arch') || DISTROS[4];
             } else {
-                document.getElementById('no-resultados').classList.add('hidden');
+                resultDistro = DISTROS.find(d => d.id === 'fedora') || DISTROS[3];
             }
-
-            empleadosFiltrados.forEach(emp => {
-                const esExpandida = filaExpandidaId === emp.id;
-                
-                let badgeClass = "";
-                if (emp.estado === "Presente") badgeClass = "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10";
-                else if (emp.estado === "Tarde") badgeClass = "bg-amber-50 text-amber-700 ring-1 ring-amber-600/10";
-                else badgeClass = "bg-rose-50 text-rose-700 ring-1 ring-rose-600/10";
-
-                const trPrincipal = document.createElement('tr');
-                trPrincipal.className = `hover:bg-slate-50/80 cursor-pointer transition-colors ${esExpandida ? 'bg-slate-50/50' : ''}`;
-                trPrincipal.onclick = () => alternarFila(emp.id);
-
-                trPrincipal.innerHTML = `
-                    <td class="py-4 px-6 text-center">
-                        <button class="text-slate-400 hover:text-slate-600 focus:outline-none transition-transform duration-200 ${esExpandida ? 'rotate-180' : ''}">
-                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                        </button>
-                    </td>
-                    <td class="py-4 px-4">
-                        <div class="flex items-center gap-3">
-                            <img class="h-10 w-10 rounded-xl object-cover ring-2 ring-slate-100 bg-slate-200" src="${emp.foto}" alt="Foto de ${emp.nombre}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(emp.nombre)}&background=6366f1&color=fff'">
-                            <div>
-                                <span class="font-semibold text-slate-900 block text-sm sm:text-base">${emp.nombre}</span>
-                                <span class="text-xs text-slate-400 block md:hidden">${emp.id}</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-4 px-4 hidden sm:table-cell">
-                        <span class="text-sm font-medium text-slate-600">${emp.id}</span>
-                    </td>
-                    <td class="py-4 px-4">
-                        <span class="text-sm text-slate-500 font-medium">${emp.telefono}</span>
-                    </td>
-                    <td class="py-4 px-4">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${badgeClass}">
-                            ${emp.estado}
-                        </span>
-                    </td>
-                    <td class="py-4 px-6 text-right" onclick="event.stopPropagation()">
-                        <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="cambiarEstadoAsistencia('${emp.id}')" title="Cambiar Estado" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="eliminarEmpleado('${emp.id}')" title="Eliminar Empleado" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-
-                cuerpo.appendChild(trPrincipal);
-
-                // Fila Expandida
-                if (esExpandida) {
-                    const trDetalle = document.createElement('tr');
-                    trDetalle.className = "bg-slate-50/30";
-                    trDetalle.innerHTML = `
-                        <td colspan="6" class="p-0">
-                            <div class="px-6 py-6 border-t border-b border-slate-100 bg-indigo-50/10">
-                                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                                    <div class="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col items-center sm:items-start lg:items-center text-center sm:text-left lg:text-center gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                                        <img class="w-24 h-24 rounded-2xl object-cover ring-4 ring-indigo-50 bg-slate-200" src="${emp.foto}" alt="Foto" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(emp.nombre)}&background=6366f1&color=fff'">
-                                        <div class="space-y-1">
-                                            <h4 class="font-bold text-slate-950 text-lg">${emp.nombre}</h4>
-                                            <span class="inline-flex px-2.5 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-semibold">${emp.puesto}</span>
-                                            <p class="text-xs text-slate-400 mt-1">${emp.id} &bull; ${emp.departamento || 'Sin Depto.'}</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                                        <div class="space-y-1">
-                                            <span class="text-xs text-slate-400 font-semibold block uppercase">Correo Corporativo</span>
-                                            <span class="text-sm font-medium text-slate-700 block truncate">${emp.correo || 'No asignado'}</span>
-                                        </div>
-                                        <div class="space-y-1">
-                                            <span class="text-xs text-slate-400 font-semibold block uppercase">Número Telefónico</span>
-                                            <span class="text-sm font-medium text-slate-700 block">${emp.telefono}</span>
-                                        </div>
-                                        <div class="space-y-1">
-                                            <span class="text-xs text-slate-400 font-semibold block uppercase">Fecha de Nacimiento</span>
-                                            <span class="text-sm font-medium text-slate-700 block">${formatearFecha(emp.nacimiento)}</span>
-                                        </div>
-                                        <div class="space-y-1 sm:col-span-2">
-                                            <span class="text-xs text-slate-400 font-semibold block uppercase">Dirección Registrada</span>
-                                            <span class="text-sm font-medium text-slate-700 block leading-relaxed">${emp.direccion || 'No especificada'}</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="lg:col-span-3 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
-                                        <div>
-                                            <h5 class="text-xs font-bold text-slate-400 uppercase mb-3">Historial del Día</h5>
-                                            <div class="space-y-3">
-                                                <div class="flex items-center gap-3 text-xs">
-                                                    <span class="w-2.5 h-2.5 rounded-full ${emp.estado === 'Presente' ? 'bg-emerald-500' : emp.estado === 'Tarde' ? 'bg-amber-500' : 'bg-slate-300'}"></span>
-                                                    <span class="text-slate-500">Entrada:</span>
-                                                    <span class="font-semibold text-slate-800">${emp.estado !== 'Ausente' ? '08:15 AM' : '--:--'}</span>
-                                                </div>
-                                                <div class="flex items-center gap-3 text-xs">
-                                                    <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
-                                                    <span class="text-slate-500">Salida:</span>
-                                                    <span class="font-semibold text-slate-800">--:--</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
-                                            <button onclick="cambiarEstadoAsistencia('${emp.id}')" class="w-full inline-flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 px-3 rounded-xl text-xs font-bold transition-colors">
-                                                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                                                Alternar Registro
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    `;
-                    cuerpo.appendChild(trDetalle);
-                }
-            });
-
-            lucide.createIcons();
-        }
-
-        function alternarFila(id) {
-            filaExpandidaId = (filaExpandidaId === id) ? null : id;
-            renderizarTabla();
-        }
-
-        // Cambiar el estado de asistencia rotativamente
-        function cambiarEstadoAsistencia(id) {
-            const index = empleados.findIndex(emp => emp.id === id);
-            if (index !== -1) {
-                const estados = ["Presente", "Tarde", "Ausente"];
-                let actualIdx = estados.indexOf(empleados[index].estado);
-                let siguienteIdx = (actualIdx + 1) % estados.length;
-                empleados[index].estado = estados[siguienteIdx];
-                
-                crearToast(`Estado de ${empleados[index].nombre} cambiado a: ${estados[siguienteIdx]}`, "success");
-                renderizarTabla();
+        } else if (exp === 'intermediate') {
+            resultDistro = DISTROS.find(d => d.id === 'fedora') || DISTROS[3];
+        } else {
+            if (ui === 'classic') {
+                resultDistro = DISTROS.find(d => d.id === 'mint') || DISTROS[1];
+            } else {
+                resultDistro = DISTROS.find(d => d.id === 'ubuntu') || DISTROS[0];
             }
         }
 
-        function eliminarEmpleado(id) {
-            const index = empleados.findIndex(emp => emp.id === id);
-            if (index !== -1) {
-                const nombre = empleados[index].nombre;
-                if (filaExpandidaId === id) filaExpandidaId = null;
-                
-                empleados.splice(index, 1);
-                crearToast(`Empleado ${nombre} eliminado del sistema`, "info");
-                renderizarTabla();
+        // Fill elements
+        document.getElementById('quiz-result-title').innerText = resultDistro.name;
+        document.getElementById('quiz-result-desc').innerText = resultDistro.tagline + ". " + resultDistro.desc;
+        document.getElementById('quiz-result-cpu').innerText = resultDistro.min_specs.cpu;
+        document.getElementById('quiz-result-ram').innerText = resultDistro.min_specs.ram;
+        document.getElementById('quiz-result-disk').innerText = resultDistro.min_specs.disk;
+        
+        const linkBtn = document.getElementById('quiz-result-link');
+        linkBtn.href = resultDistro.official_url;
+    }
+
+    function resetQuiz() {
+        currentQuizStep = 0;
+        quizAnswers = [];
+        document.getElementById('quiz-question-container').classList.remove('hidden');
+        document.getElementById('quiz-result-container').classList.add('hidden');
+        loadQuizQuestion();
+    }
+
+    /* ========================================================
+       SIMULADOR DE TERMINAL INTERACTIVA EN JAVASCRIPT
+       ======================================================== */
+    const termScreen = document.getElementById('terminal-screen');
+    const termInput = document.getElementById('terminal-input');
+    
+    // Command history
+    let commandHistory = [];
+    let historyIndex = -1;
+
+    // Simulated file system
+    let currentDir = "/home/usuario";
+    const fileSystem = {
+        "/": {
+            "type": "dir",
+            "children": ["bin", "boot", "etc", "home", "var", "root"]
+        },
+        "/home": {
+            "type": "dir",
+            "children": ["usuario"]
+        },
+        "/home/usuario": {
+            "type": "dir",
+            "children": ["info.txt", "proyectos", "bienvenida.sh"]
+        },
+        "/home/usuario/info.txt": {
+            "type": "file",
+            "content": "Linux es asombroso. Esta terminal simulada fue programada con puro HTML, Tailwind CSS y Javascript para enseñarte las bases del sistema jerárquico."
+        },
+        "/home/usuario/bienvenida.sh": {
+            "type": "file",
+            "content": "echo '¡Hola de nuevo, viajero estelar del software libre!'"
+        },
+        "/home/usuario/proyectos": {
+            "type": "dir",
+            "children": []
+        }
+    };
+
+    termInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const rawCmd = termInput.value.trim();
+            termInput.value = '';
+            if (rawCmd.length === 0) return;
+
+            // Log command
+            writeToTerminal(`user@linuxhub:${getCompactPath(currentDir)}$ ${rawCmd}`, 'text-white font-semibold mt-2');
+            
+            commandHistory.push(rawCmd);
+            historyIndex = commandHistory.length;
+            
+            executeSimulatedCommand(rawCmd);
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                termInput.value = commandHistory[historyIndex];
             }
+            e.preventDefault();
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                termInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                termInput.value = '';
+            }
+            e.preventDefault();
         }
+    });
 
-        function actualizarMetricas() {
-            const total = empleados.length;
-            const presentes = empleados.filter(e => e.estado === 'Presente').length;
-            const retrasos = empleados.filter(e => e.estado === 'Tarde').length;
-            const ausentes = empleados.filter(e => e.estado === 'Ausente').length;
+    function getCompactPath(path) {
+        if (path === "/home/usuario") return "~";
+        return path;
+    }
 
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-presentes').innerText = presentes;
-            document.getElementById('stat-retrasos').innerText = retrasos;
-            document.getElementById('stat-ausentes').innerText = ausentes;
-        }
+    function writeToTerminal(text, className = 'text-gray-300') {
+        const p = document.createElement('p');
+        p.className = `${className} whitespace-pre-wrap leading-relaxed`;
+        p.innerHTML = text;
+        termScreen.appendChild(p);
+        termScreen.scrollTop = termScreen.scrollHeight;
+    }
 
-        function filtrarPorEstado(estado) {
-            filtroEstadoActual = estado;
-            const filtros = ['todos', 'presente', 'tarde', 'ausente'];
-            filtros.forEach(f => {
-                const btn = document.getElementById(`btn-filtro-${f}`);
-                if (f === estado.toLowerCase()) {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-white text-slate-800 shadow-sm whitespace-nowrap";
+    function executeSimulatedCommand(rawLine) {
+        const tokens = rawLine.split(/\s+/);
+        const cmd = tokens[0].toLowerCase();
+        const args = tokens.slice(1);
+
+        switch (cmd) {
+            case 'help':
+                writeToTerminal(`Comandos integrados disponibles:\n` +
+                    `  help            - Muestra esta ayuda\n` +
+                    `  ls              - Lista los archivos del directorio actual\n` +
+                    `  cd [dir]        - Cambia de directorio (ej: cd proyectos o cd ..)\n` +
+                    `  pwd             - Muestra la ruta del directorio de trabajo actual\n` +
+                    `  cat [archivo]   - Muestra el contenido de un archivo (ej: cat info.txt)\n` +
+                    `  whoami          - Identifica el usuario con sesión activa\n` +
+                    `  neofetch        - Muestra detalles informativos del sistema simulado\n` +
+                    `  sudo            - Ejecuta comandos con privilegios elevados (¡Úsalo con cautela!)\n` +
+                    `  clear           - Limpia la pantalla de la terminal`, 'text-brand-500');
+                break;
+            case 'ls':
+                const dirObj = fileSystem[currentDir];
+                if (dirObj && dirObj.type === 'dir') {
+                    if (dirObj.children.length === 0) {
+                        writeToTerminal("(Directorio vacío)", 'text-gray-500');
+                    } else {
+                        const fileNames = dirObj.children.map(name => {
+                            const fullPath = currentDir === "/" ? `/${name}` : `${currentDir}/${name}`;
+                            const isDir = fileSystem[fullPath] && fileSystem[fullPath].type === 'dir';
+                            return isDir ? `<span class="text-blue-400 font-bold">${name}/</span>` : `<span class="text-gray-300">${name}</span>`;
+                        });
+                        writeToTerminal(fileNames.join('    '));
+                    }
                 } else {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 whitespace-nowrap";
+                    writeToTerminal("Error leyendo directorio actual.", 'text-red-400');
                 }
-            });
-            renderizarTabla();
-        }
+                break;
+            case 'pwd':
+                writeToTerminal(currentDir, 'text-gray-400');
+                break;
+            case 'cd':
+                const target = args[0] || "/home/usuario";
+                if (target === '..') {
+                    if (currentDir === "/") {
+                        writeToTerminal("Ya estás en el directorio raíz (/).", 'text-yellow-500');
+                    } else {
+                        const parts = currentDir.split('/');
+                        parts.pop();
+                        currentDir = parts.join('/') || "/";
+                    }
+                } else {
+                    let destPath = target.startsWith('/') ? target : `${currentDir}/${target}`;
+                    if (currentDir === "/") destPath = `/${target}`;
+                    // Clean up double slashes if any
+                    destPath = destPath.replace(/\/+/g, '/');
+                    if (destPath.endsWith('/') && destPath.length > 1) destPath = destPath.slice(0, -1);
 
-        function filtrarEmpleados() {
-            renderizarTabla();
-        }
-
-        // Control de Carga de Imagen
-        function procesarFotoSeleccionada(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagenBase64Cargada = e.target.result;
-                    document.getElementById('preview-foto').src = imagenBase64Cargada;
+                    if (fileSystem[destPath] && fileSystem[destPath].type === 'dir') {
+                        currentDir = destPath;
+                    } else {
+                        writeToTerminal(`cd: no existe tal directorio o archivo: ${target}`, 'text-red-400');
+                    }
                 }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Controladores del Modal de Registro
-        function abrirModalNuevoEmpleado() {
-            document.getElementById('modal-empleado').classList.remove('hidden');
-        }
-
-        function cerrarModalNuevoEmpleado() {
-            document.getElementById('modal-empleado').classList.add('hidden');
-            document.getElementById('form-empleado').reset();
-            // Reset de imagen preview
-            imagenBase64Cargada = null;
-            document.getElementById('preview-foto').src = "https://ui-avatars.com/api/?name=Nuevo+Empleado&background=f1f5f9&color=64748b";
-        }
-
-        // Guardar nuevo empleado
-        function guardarEmpleado(event) {
-            event.preventDefault();
-
-            const id = document.getElementById('form-id').value.trim();
-            const nombre = document.getElementById('form-nombre').value.trim();
-            const telefono = document.getElementById('form-telefono').value.trim();
-            const puesto = document.getElementById('form-puesto').value.trim();
-            const depto = document.getElementById('form-depto').value.trim() || 'Sin asignar';
-            const nacimiento = document.getElementById('form-nacimiento').value;
-            const correo = document.getElementById('form-correo').value.trim();
-            const direccion = document.getElementById('form-direccion').value.trim();
-
-            if (empleados.some(emp => emp.id === id)) {
-                crearToast("Error: Ya existe un empleado con ese ID.", "error");
-                return;
-            }
-
-            // Si no subieron imagen, generar un avatar por defecto usando su nombre
-            const fotoEstablecida = imagenBase64Cargada || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}&background=6366f1&color=fff`;
-
-            const nuevoEmpleado = {
-                id,
-                nombre,
-                telefono,
-                puesto,
-                departamento: depto,
-                correo,
-                nacimiento,
-                direccion,
-                estado: "Presente",
-                foto: fotoEstablecida
-            };
-
-            empleados.push(nuevoEmpleado);
-            cerrarModalNuevoEmpleado();
-            crearToast(`¡${nombre} registrado exitosamente!`, "success");
-            renderizarTabla();
-        }
-
-        // Lógica del simulador IA (Webcam)
-        function abrirModalSimuladorIA() {
-            const select = document.getElementById('simulacion-empleado-id');
-            select.innerHTML = '';
-            
-            if (empleados.length === 0) {
-                select.innerHTML = '<option value="">No hay empleados registrados</option>';
-            } else {
-                empleados.forEach(emp => {
-                    select.innerHTML += `<option value="${emp.id}">${emp.nombre} (${emp.id})</option>`;
-                });
-            }
-            
-            document.getElementById('modal-ia').classList.remove('hidden');
-        }
-
-        function cerrarModalSimuladorIA() {
-            document.getElementById('modal-ia').classList.add('hidden');
-        }
-
-        function ejecutarEscaneoIA() {
-            const empId = document.getElementById('simulacion-empleado-id').value;
-            if (!empId) {
-                crearToast("Debe registrar al menos un empleado para simular", "error");
-                return;
-            }
-
-            const radios = document.getElementsByName('sim-estado');
-            let estadoSeleccionado = "Presente";
-            for (let r of radios) {
-                if (r.checked) {
-                    estadoSeleccionado = r.value;
+                document.getElementById('terminal-prompt').innerText = `user@linuxhub:${getCompactPath(currentDir)}$`;
+                break;
+            case 'cat':
+                if (args.length === 0) {
+                    writeToTerminal("Uso: cat [nombre_del_archivo]", 'text-yellow-500');
                     break;
                 }
-            }
+                const filename = args[0];
+                let pathToFile = filename.startsWith('/') ? filename : `${currentDir}/${filename}`;
+                if (currentDir === "/") pathToFile = `/${filename}`;
+                pathToFile = pathToFile.replace(/\/+/g, '/');
 
-            // Simulando la llamada de la IA que edita el estado de asistencia en el array de memoria
-            const index = empleados.findIndex(emp => emp.id === empId);
-            if (index !== -1) {
-                empleados[index].estado = estadoSeleccionado;
-                crearToast(`[IA Webcam] Rostro reconocido: ${empleados[index].nombre} marcado como ${estadoSeleccionado}`, "success");
-                cerrarModalSimuladorIA();
-                renderizarTabla();
-            }
+                const fileObj = fileSystem[pathToFile];
+                if (fileObj && fileObj.type === 'file') {
+                    writeToTerminal(fileObj.content, 'text-white italic');
+                } else if (fileObj && fileObj.type === 'dir') {
+                    writeToTerminal(`cat: ${filename}: Es un directorio`, 'text-yellow-500');
+                } else {
+                    writeToTerminal(`cat: ${filename}: Archivo no encontrado`, 'text-red-400');
+                }
+                break;
+            case 'whoami':
+                writeToTerminal("guest_user_linuxhub", 'text-emerald-400');
+                break;
+            case 'neofetch':
+                writeToTerminal(
+                    `     .--.         guest@linuxhub.sh\n` +
+                    `    |o_o |        -----------------\n` +
+                    `    |:_/ |        OS: Linux Hub Web Simulator v2.0\n` +
+                    `   //   \\ \\       Kernel: Browser Sandbox x86_64\n` +
+                    `  (|     | )      Shell: Interactive Mock JS Bash\n` +
+                    ` /'\\_   _/'\`\\     Memory: 100% de conocimiento libre\n` +
+                    ` \\___)=(___/      CPU: Tu propio cerebro aprendiendo`, 'text-brand-500 font-mono'
+                );
+                break;
+            case 'clear':
+                termScreen.innerHTML = '';
+                break;
+            case 'sudo':
+                const subCmd = args.join(' ');
+                if (subCmd.includes('rm -rf')) {
+                    writeToTerminal("⚠️ ¡ALERTA! El comando 'sudo rm -rf' intentó borrar de forma destructiva la raíz del sistema.\nEn el simulador hemos cancelado la operación para evitar que explote el servidor.", 'text-red-500 font-bold uppercase animate-pulse');
+                } else {
+                    writeToTerminal("[sudo] contraseña para usuario guest: \nAcceso denegado: este simulador opera en modo sandbox sin root por motivos de seguridad.", 'text-yellow-500');
+                }
+                break;
+            default:
+                writeToTerminal(`command not found: ${cmd}. Intente teclear 'help' para ver comandos disponibles.`, 'text-red-400');
         }
+    }
 
-        // Sincronizar estilo visual de los botones de radio personalizados en el simulador
-        function sincronizarRadioInputsEstilo() {
-            const labels = document.querySelectorAll('input[name="sim-estado"]');
-            labels.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    // Limpiar clases activas en los hermanos
-                    labels.forEach(r => {
-                        r.parentElement.classList.remove('ring-2', 'ring-indigo-500', 'bg-slate-50');
-                    });
-                    if (e.target.checked) {
-                        e.target.parentElement.classList.add('ring-2', 'ring-indigo-500', 'bg-slate-50');
-                    }
-                });
-            });
-        }
+    function runExampleCmd(fullCmd) {
+        termInput.value = fullCmd;
+        termInput.focus();
+        // Trigger command enter mockingly
+        setTimeout(() => {
+            writeToTerminal(`user@linuxhub:${getCompactPath(currentDir)}$ ${fullCmd}`, 'text-white font-semibold mt-2');
+            executeSimulatedCommand(fullCmd);
+            termInput.value = '';
+        }, 150);
+    }
 
-        // Sistema de Notificaciones
-        function crearToast(mensaje, tipo = "info") {
-            const contenedor = document.getElementById('contenedor-notificaciones');
-            const toast = document.createElement('div');
-            
-            let colorBg = "bg-white";
-            let colorIcon = "text-indigo-500";
-            let icono = "info";
+    /* ========================================================
+       CHULETA DE COMANDOS (Cheat Sheet)
+       ======================================================== */
+    const COMMAND_SHEETS = [
+        // Archivos y navegación
+        { cmd: "ls -la", desc: "Muestra archivos en el directorio actual, incluyendo ocultos (.archivo) e información de permisos y pesos.", cat: "files" },
+        { cmd: "cd /etc", desc: "Te traslada al directorio /etc (configuraciones globales del sistema).", cat: "files" },
+        { cmd: "pwd", desc: "Muestra en pantalla el directorio actual.", cat: "files" },
+        { cmd: "mkdir mi_carpeta", desc: "Crea una nueva carpeta con nombre 'mi_carpeta'.", cat: "files" },
+        { cmd: "touch documento.txt", desc: "Crea un archivo vacío llamado 'documento.txt'.", cat: "files" },
+        { cmd: "cp arch.txt copia.txt", desc: "Copia un archivo (ej. duplica 'arch.txt' en 'copia.txt').", cat: "files" },
+        { cmd: "mv arch.txt /tmp", desc: "Mueve un archivo a una ruta específica, o lo renombra.", cat: "files" },
+        { cmd: "rm -f archivo.txt", desc: "Elimina un archivo sin pedir confirmaciones adicionales.", cat: "files" },
+        { cmd: "find / -name *.conf", desc: "Busca en todo el disco de raíz (/) todos los archivos terminados en .conf.", cat: "files" },
+        
+        // Monitoreo y Sistema
+        { cmd: "top", desc: "Muestra en tiempo real los procesos en ejecución, el uso de CPU y de memoria RAM de forma interactiva.", cat: "system" },
+        { cmd: "htop", desc: "Alternativa visual, interactiva y de colores a 'top' (es necesario instalarlo).", cat: "system" },
+        { cmd: "df -h", desc: "Informa del espacio libre y ocupado en tus discos duros con formato amigable de lectura.", cat: "system" },
+        { cmd: "free -m", desc: "Muestra en tiempo real el uso de la memoria RAM del sistema en Megabytes.", cat: "system" },
+        { cmd: "uname -a", desc: "Muestra todos los detalles del Kernel Linux compilado e instalado actualmente.", cat: "system" },
+        { cmd: "journalctl -xe", desc: "Inspecciona el log global del sistema con hincapié en posibles errores recientes.", cat: "system" },
+        { cmd: "systemctl status ssh", desc: "Comprueba el estado operativo del servicio SSH.", cat: "system" },
+        { cmd: "neofetch", desc: "Muestra de forma vistosa en la terminal las especificaciones del hardware y la distro.", cat: "system" },
 
-            if (tipo === "success") {
-                colorIcon = "text-emerald-500";
-                icono = "check-circle-2";
-            } else if (tipo === "error") {
-                colorIcon = "text-rose-500";
-                icono = "alert-triangle";
-            }
+        // Redes y Permisos
+        { cmd: "chmod +x script.sh", desc: "Añade permisos de ejecución a un archivo (por ej. un script bash).", cat: "files" },
+        { cmd: "chown root:root arch.txt", desc: "Cambia el propietario de un archivo para que pertenezca a 'root'.", cat: "network" },
+        { cmd: "ping google.com", desc: "Comprueba la conexión de red enviando paquetes ICMP al servidor especificado.", cat: "network" },
+        { cmd: "ip a", desc: "Despliega todas las tarjetas de red físicas/virtuales y sus respectivas direcciones IP.", cat: "network" },
+        { cmd: "curl ipinfo.io/ip", desc: "Consulta tu dirección IP pública mediante una petición web rápida de terminal.", cat: "network" },
+        { cmd: "netstat -tulpen", desc: "Muestra los puertos de red abiertos y a la escucha en tu máquina.", cat: "network" },
+        { cmd: "ufw enable", desc: "Habilita el cortafuegos sencillo por defecto (Uncomplicated Firewall) en Ubuntu/Mint.", cat: "network" },
+        { cmd: "ssh user@192.168.1.100", desc: "Conéctate de forma cifrada y remota a la terminal de otro computador en red.", cat: "network" }
+    ];
 
-            toast.className = `flex items-center gap-3 p-4 rounded-xl shadow-lg border border-slate-100 ${colorBg} animate-in slide-in-from-bottom-5 duration-300`;
-            toast.innerHTML = `
-                <div class="${colorIcon}">
-                    <i data-lucide="${icono}" class="w-5 h-5"></i>
+    function renderCommandSheets(list = COMMAND_SHEETS) {
+        const colFiles = document.getElementById('col-files');
+        const colSystem = document.getElementById('col-system');
+        const colNetwork = document.getElementById('col-network');
+
+        colFiles.innerHTML = '';
+        colSystem.innerHTML = '';
+        colNetwork.innerHTML = '';
+
+        list.forEach(item => {
+            const card = document.createElement('div');
+            card.className = "p-3 bg-terminal-bg/80 border border-terminal-border rounded-xl space-y-2 hover:border-brand-500/30 transition-all";
+            card.innerHTML = `
+                <div class="flex justify-between items-center bg-black/40 px-3 py-2 rounded-lg border border-terminal-border">
+                    <code class="text-white font-mono text-sm">${item.cmd}</code>
+                    <button onclick="copyCommand('${item.cmd}')" class="text-gray-500 hover:text-brand-500 transition-colors text-xs" title="Copiar Comando">
+                        <i class="fas fa-copy"></i>
+                    </button>
                 </div>
-                <div class="text-sm font-semibold text-slate-800">${mensaje}</div>
+                <p class="text-xs text-gray-400">${item.desc}</p>
             `;
 
-            contenedor.appendChild(toast);
-            lucide.createIcons();
+            if (item.cat === 'files') colFiles.appendChild(card);
+            else if (item.cat === 'system') colSystem.appendChild(card);
+            else if (item.cat === 'network') colNetwork.appendChild(card);
+        });
+    }
 
-            setTimeout(() => {
-                toast.classList.add('animate-out', 'fade-out-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
+    function searchCommands() {
+        const query = document.getElementById('command-search').value.toLowerCase().trim();
+        if (query === '') {
+            renderCommandSheets(COMMAND_SHEETS);
+        } else {
+            const filtered = COMMAND_SHEETS.filter(item => 
+                item.cmd.toLowerCase().includes(query) || 
+                item.desc.toLowerCase().includes(query)
+            );
+            renderCommandSheets(filtered);
         }
-    </script>
+    }
+
+    function copyCommand(text) {
+        // Fallback robust copy as per rules instructions
+        const tempTextarea = document.createElement("textarea");
+        tempTextarea.value = text;
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        try {
+            document.execCommand("copy");
+            showCopyNotification(text);
+        } catch (err) {
+            console.error("No se pudo copiar", err);
+        }
+        document.body.removeChild(tempTextarea);
+    }
+
+    function showCopyNotification(text) {
+        const notif = document.getElementById('copy-notif');
+        const notifText = document.getElementById('copy-notif-text');
+        notifText.innerText = `Copiado: ${text}`;
+        notif.classList.remove('hidden');
+        
+        setTimeout(() => {
+            notif.classList.add('hidden');
+        }, 2000);
+    }
+
+    /* ========================================================
+       SISTEMA DE DIRECTORIOS (FHS) INTERACTIVO
+       ======================================================== */
+    const DIRECTORY_INFO = {
+        "/": {
+            title: "/ (Raíz - Root Directory)",
+            desc: "Es el punto de inicio de toda la estructura de archivos en Linux. Todas las carpetas y unidades de almacenamiento descienden de la raíz. En Linux, la barra diagonal '/' representa la cima de la pirámide.",
+            funFact: "Es imposible ir más arriba. Borrar este directorio borra literalmente toda la instalación de tu sistema.",
+            danger: 100,
+            dangerTxt: "Máximo (Crítico)"
+        },
+        "/bin": {
+            title: "/bin (Binaries - Ejecutables)",
+            desc: "Alberga los archivos ejecutables (programas) fundamentales del sistema que deben estar accesibles para todos los usuarios. Aquí encontrarás comandos como 'ls', 'cp', 'mv' y 'ping'.",
+            funFact: "Si borras esta carpeta, la gran mayoría de comandos de consola dejarán de funcionar de manera instantánea.",
+            danger: 90,
+            dangerTxt: "Muy Alto"
+        },
+        "/boot": {
+            title: "/boot (Bootloader - Arranque)",
+            desc: "Contiene todos los archivos necesarios para iniciar el sistema operativo, tales como los cargadores de arranque (como GRUB), el núcleo Linux (vmlinuz) y datos del sistema inicial (initramfs).",
+            funFact: "Un archivo dañado o borrado aquí impedirá que tu ordenador pase de la pantalla de la BIOS.",
+            danger: 95,
+            dangerTxt: "Crítico"
+        },
+        "/dev": {
+            title: "/dev (Devices - Dispositivos)",
+            desc: "En Linux, casi todo es considerado un archivo. Este directorio contiene 'archivos especiales' que representan tu hardware físico (discos duros sda, puertos usb, tarjetas de sonido o cámaras web).",
+            funFact: "Si envías datos directamente a '/dev/null', estos se desvanecerán en la nada. Se conoce como el agujero negro de Linux.",
+            danger: 80,
+            dangerTxt: "Alto"
+        },
+        "/etc": {
+            title: "/etc (Editable Text Configuration)",
+            desc: "Este es el panel de control en formato texto de Linux. Contiene los archivos de configuración globales de todos los servicios instalados (servidor web, red, cuentas de usuario, monturas de disco).",
+            funFact: "Los archivos que terminan en '.conf' suelen encontrarse aquí. Suelen editarse con herramientas como 'nano' o 'vim'.",
+            danger: 85,
+            dangerTxt: "Muy Alto"
+        },
+        "/home": {
+            title: "/home (Carpetas de Usuarios)",
+            desc: "Aquí se alojan los directorios personales de todos los usuarios del sistema (excepto el superusuario root). Contiene tus descargas, imágenes, documentos personales y configuraciones propias de aplicaciones.",
+            funFact: "Funciona exactamente igual que la carpeta 'C:\\Users\\' en Windows.",
+            danger: 60,
+            dangerTxt: "Medio-Alto"
+        },
+        "/root": {
+            title: "/root (Directorio Personal del Superusuario)",
+            desc: "La carpeta personal de la cuenta administrativa especial del sistema llamada 'root'. Está separada de '/home' adrede para garantizar que sea accesible en modo de recuperación si '/home' no llega a montarse.",
+            funFact: "Ningún usuario estándar tiene permisos para ingresar o ver el contenido de este directorio.",
+            danger: 75,
+            dangerTxt: "Alto"
+        },
+        "/usr": {
+            title: "/usr (User System Resources)",
+            desc: "Alberga la inmensa mayoría de librerías, manuales, juegos, iconos y binarios que utiliza el usuario común del sistema operativo, pero que no son estrictamente indispensables para la recuperación del sistema en emergencias.",
+            funFact: "Suele albergar directorios espejo como /usr/bin o /usr/lib para aplicaciones no fundamentales.",
+            danger: 70,
+            dangerTxt: "Alto"
+        },
+        "/var": {
+            title: "/var (Variable - Archivos Variables)",
+            desc: "Guarda todos los archivos temporales de almacenamiento con crecimiento dinámico de datos. Contiene los archivos log de eventos del sistema (/var/log), colas de correos y servidores web.",
+            funFact: "Si tu servidor web está guardando demasiados reportes de error, esta carpeta podría llenarse y detener el sistema.",
+            danger: 50,
+            dangerTxt: "Medio"
+        }
+    };
+
+    function showFolderInfo(folderKey) {
+        const info = DIRECTORY_INFO[folderKey];
+        if (!info) return;
+
+        document.getElementById('directory-title').innerText = info.title;
+        document.getElementById('directory-desc').innerText = info.desc;
+        document.getElementById('directory-fun-fact').innerText = info.funFact;
+        
+        const dBar = document.getElementById('directory-danger');
+        const dText = document.getElementById('directory-danger-txt');
+        
+        dBar.style.width = `${info.danger}%`;
+        dText.innerText = info.dangerTxt;
+
+        // Danger color coding
+        if(info.danger >= 90) {
+            dBar.className = "h-full bg-red-500 transition-all duration-300";
+            dText.className = "text-xs text-red-500 font-bold";
+        } else if(info.danger >= 70) {
+            dBar.className = "h-full bg-orange-500 transition-all duration-300";
+            dText.className = "text-xs text-orange-500 font-bold";
+        } else {
+            dBar.className = "h-full bg-yellow-500 transition-all duration-300";
+            dText.className = "text-xs text-yellow-500 font-bold";
+        }
+    }
+
+    /* ========================================================
+       INICIALIZACIÓN AL CARGAR LA PÁGINA
+       ======================================================== */
+    window.onload = function() {
+        // Cargar listas e interfaces
+        renderDistros(DISTROS);
+        loadQuizQuestion();
+        renderCommandSheets(COMMAND_SHEETS);
+        
+        // Auto-foco terminal
+        termInput.focus();
+    }
+</script>
 </body>
 </html>
